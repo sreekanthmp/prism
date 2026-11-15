@@ -139,10 +139,11 @@ def test_the_evidence_reads_in_real_words_for_each_direction():
     def text(perm, name):
         return next(c["text"] for c in perm["checks"] if c["name"] == name)
 
-    assert text(ce, "down structure before") == "15M lower high 24,650.00 under 24,760.00 and lower low 24,520.00 under 24,600.00"
-    assert text(ce, "structure turned") == "then a higher low 24,580.00 over 24,520.00 and a higher high 24,715.00 over 24,650.00"
-    assert text(pe, "up structure before") == "15M higher low 24,140.00 over 24,040.00 and higher high 24,300.00 over 24,190.00"
-    assert text(pe, "structure turned") == "then a lower high 24,250.00 under 24,300.00 and a lower low 24,080.00 under 24,140.00"
+    # each check says what it NEEDS and what it FOUND (the swings oldest first, in real prices, with the way each moved): a failing check then reads as the failure it is
+    assert text(ce, "down structure before") == "needs a lower high and a lower low; found 15M highs 24,760.00 → 24,650.00 (lower) and lows 24,600.00 → 24,520.00 (lower)"
+    assert text(ce, "structure turned") == "needs a higher low and a higher high; found 15M lows 24,520.00 → 24,580.00 (higher) and highs 24,650.00 → 24,715.00 (higher)"
+    assert text(pe, "up structure before") == "needs a higher low and a higher high; found 15M lows 24,040.00 → 24,140.00 (higher) and highs 24,190.00 → 24,300.00 (higher)"
+    assert text(pe, "structure turned") == "needs a lower high and a lower low; found 15M highs 24,300.00 → 24,250.00 (lower) and lows 24,140.00 → 24,080.00 (lower)"
     assert text(pe, "the exhaustion extreme still holds") == "no 15M candle has traded above 24,300.00 since it formed"
     assert text(ce, "the exhaustion extreme still holds") == "no 15M candle has traded below 24,520.00 since it formed"
     assert ce["reason"] == "granted: the bearish trend is weakening and the 15M structure has turned" and pe["reason"] == "granted: the bullish trend is weakening and the 15M structure has turned"
@@ -261,6 +262,52 @@ def test_a_put_is_never_made_from_the_calls_structure_and_a_call_never_from_the_
     assert sc.setup is None and sc.info["granted"] is False and "down structure before" in sc.note
     never_trades(pe_ctx, PE, swings=SWINGS)
     never_trades(ter_ctx, CE, swings=PE_SWINGS)
+
+
+def test_a_denial_says_what_was_needed_and_what_was_found_so_it_cannot_be_read_as_a_fact():
+    """The live screen of 2026-11-12 said "denied: up structure before (15M higher low 25,095.35 over 25,162.70 ...)": the requirement with the real numbers, which read as if they satisfied it."""
+    pe = scan_real(pe_ctx(51, swings=SWINGS), PE)  # a bullish 1H, and the swings of a BEARISH exhaustion: the put needs an UP structure before, and the real swings went down
+    assert ("counter-trend permission denied: up structure before (needs a higher low and a higher high; "
+            "found 15M lows 24,600.00 → 24,520.00 (lower) and highs 24,760.00 → 24,650.00 (lower))") in pe.note  # fmt: skip
+    ce = scan_real(ter_ctx(51, swings=PE_SWINGS), CE)  # the mirror: a call needs a DOWN structure before, and the real swings went up
+    assert ("counter-trend permission denied: down structure before (needs a lower high and a lower low; "
+            "found 15M highs 24,190.00 → 24,300.00 (higher) and lows 24,040.00 → 24,140.00 (higher))") in ce.note  # fmt: skip
+
+
+def test_a_structure_that_turned_only_halfway_says_which_half_did_not():
+    ce_half = SWINGS[:5] + [("H", t15(13), 24640.0)]  # a higher low, but the high 24,640 is under the lower high 24,650
+    note = scan_real(ter_ctx(51, swings=ce_half), CE).note
+    assert "denied: structure turned (needs a higher low and a higher high; found 15M lows 24,520.00 → 24,580.00 (higher) and highs 24,650.00 → 24,640.00 (lower))" in note
+    pe_half = PE_SWINGS[:5] + [("L", t15(13), 24150.0)]  # a lower high, but the low 24,150 is over 24,140
+    note = scan_real(pe_ctx(51, swings=pe_half), PE).note
+    assert "denied: structure turned (needs a lower high and a lower low; found 15M highs 24,300.00 → 24,250.00 (lower) and lows 24,140.00 → 24,150.00 (higher))" in note
+
+
+def test_a_swing_at_exactly_the_same_price_is_level_not_higher_or_lower():
+    level = [("H", t15(2), 24760.0), ("L", t15(4), 24600.0), ("H", t15(6), 24760.0)] + SWINGS[3:]  # the "lower high" equals the high before it
+    note = scan_real(ter_ctx(51, swings=level), CE).note
+    assert "denied: down structure before (needs a lower high and a lower low; found 15M highs 24,760.00 → 24,760.00 (level) and lows 24,600.00 → 24,520.00 (lower))" in note
+
+
+def test_the_words_of_every_structure_check_agree_with_its_verdict_for_any_swings_in_both_directions():
+    """For random swings: a check is OK exactly when every step it found moved the way it needed, and the text says so in its own words, whatever the direction (a put's view is mirrored)."""
+    import random
+    import re
+
+    rnd, seen = random.Random(11), {"ok": 0, "failed": 0}
+    for _ in range(300):
+        highs, lows = [round(rnd.uniform(24400, 24800), 2) for _ in range(3)], [round(rnd.uniform(24400, 24800), 2) for _ in range(3)]
+        swings = [("H", t15(2), highs[0]), ("L", t15(4), lows[0]), ("H", t15(6), highs[1]), ("L", t15(9), lows[1]), ("L", t15(11), lows[2]), ("H", t15(13), highs[2])]
+        for build, slot in ((ter_ctx, CE), (pe_ctx, PE)):
+            checks = (scan_real(build(51, swings=swings), slot).info or {}).get("checks") or []
+            for c in (c for c in checks if c["name"] in ("down structure before", "up structure before", "structure turned")):
+                m = re.fullmatch(r"needs a (higher|lower) (high|low) and a (higher|lower) (high|low); found 15M (highs|lows) [\d,.]+ → [\d,.]+ \((higher|lower|level)\) and (highs|lows) [\d,.]+ → [\d,.]+ \((higher|lower|level)\)", c["text"])
+                assert m, c["text"]
+                need1, need2, got1, got2 = m.group(1), m.group(3), m.group(6), m.group(8)
+                assert (need1 == got1 and need2 == got2) == (c["ok"] is True), c  # OK exactly when both steps moved the way the check needed
+                assert m.group(2) == m.group(5).rstrip("s") and m.group(4) == m.group(7).rstrip("s")  # and the found swings are the ones it named
+                seen["ok" if c["ok"] else "failed"] += 1
+    assert seen["ok"] > 20 and seen["failed"] > 100, seen  # (both outcomes were really exercised)
 
 
 def test_a_structure_that_cannot_be_judged_yet_counts_the_real_swing_highs_and_lows():

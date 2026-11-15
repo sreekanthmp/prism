@@ -15,14 +15,18 @@ CLOSE_GRACE = 3.0  # seconds to wait for late ticks before closing a candle on t
 MAX_RECOVERY_ATTEMPTS = 3
 
 
-def _seconds_into_day(ts: float) -> float:
-    dt = datetime.fromtimestamp(ts, IST)
-    return dt.hour * 3600 + dt.minute * 60 + dt.second + dt.microsecond / 1e6
+IST_OFFSET_S = 19800  # IST is UTC+05:30 all year: it has no daylight saving
 
 
 def day_start(ts: float) -> float:
-    """Midnight IST (epoch seconds) of the day containing ts."""
-    return ts - _seconds_into_day(ts)
+    """Midnight IST (epoch seconds) of the day containing ts. EXACT: a whole number of seconds, whatever fraction of a second ts has. (It used to be ts minus the seconds into the day, and with a
+    real clock's fraction that left it about 2e-7 s off in three moments out of four: a candle that started at exactly 12:10:00 then never equalled its slot 12:10:00, and a complete history was
+    reported as missing candles, so the start-up validation passed one try in four whatever the data held. Every test used a whole-second clock, where the two are the same.)"""
+    return float((ts + IST_OFFSET_S) // 86400 * 86400 - IST_OFFSET_S)
+
+
+def _seconds_into_day(ts: float) -> float:
+    return ts - day_start(ts)
 
 
 def in_session(ts: float) -> bool:

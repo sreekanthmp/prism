@@ -21,7 +21,7 @@ from datetime import datetime
 from pathlib import Path
 
 from .candles import CLOSE_S, IST, OPEN_S
-from .journal import read
+from .journal import expand_paths, read
 from .journal_check import verify
 
 OR_END_S = 9 * 3600 + 30 * 60  # the opening range is complete at 09:30
@@ -296,8 +296,12 @@ def main(argv=None) -> int:
     args = ap.parse_args(argv)
     if hasattr(sys.stdout, "reconfigure"):
         sys.stdout.reconfigure(errors="replace")
+    files, unmatched = expand_paths(args.files)  # (the star is expanded here: PowerShell does not do it for a program)
+    if unmatched:
+        print(f"{unmatched[0]}: no journal matches", file=sys.stderr)
+        return 2
     reports = []
-    for f in args.files:
+    for f in files:
         try:
             reports.append(check_file(f))
         except OSError as e:

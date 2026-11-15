@@ -8,6 +8,7 @@ from pathlib import Path
 
 import pytest
 import scenarios as S
+from dashboard_harness import dashboard_source
 from test_phase3_integration import bull  # noqa: F401
 
 from app import analysis as an
@@ -271,7 +272,7 @@ def test_a_stale_price_is_never_described_as_where_the_market_is():
 def test_with_no_setup_the_explanation_says_why_and_the_dashboard_says_a_decision_is_not_a_recommendation():
     none = decide_for(S.bull_pullback(11))  # the leg has just made its high: no pullback yet
     assert none["decision"]["action"] != "BUY CE" and none["explain"]["setup"] is None and none["explain"]["happened"]
-    html = (ROOT / "app" / "static" / "index.html").read_text(encoding="utf-8")
+    html = dashboard_source()  # the dashboard's own source: the wording it promises
     assert "is not a recommendation to trade" in html and "Data not trusted" in html and "STALE: last NIFTY tick" in html and "id=\"dh\"" in html
 
 

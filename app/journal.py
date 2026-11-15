@@ -18,6 +18,7 @@ Review a session:
 """
 
 import argparse
+import glob
 import json
 import logging
 import math
@@ -91,6 +92,22 @@ def record(out: dict, a: dict, events: list, now: float, reason: str, feed: dict
         "timeframes": {tf: {**{k: t.get(k) for k in keep}, "last_candle_end": (t.get("last_completed") or {}).get("end")} for tf, t in tfs.items()},
         "analysis": {"reasons": (a.get("condition") or {}).get("reasons"), "warnings": a.get("warnings")},
     }  # fmt: skip
+
+
+def expand_paths(args) -> tuple[list[str], list[str]]:
+    """The files named on a command line, with wildcards expanded HERE. A Unix shell expands `logs/decisions-2026-11-1*.jsonl` before the program starts; PowerShell and cmd do not, so the program would be
+    handed the star itself ("cannot be read (Invalid argument)"). A name that exists is taken as it is (a file may have a bracket in its name); a pattern is expanded, sorted, and each file is named once.
+    Returns (the files, the patterns that matched nothing)."""
+    files, unmatched = [], []
+    for a in args:
+        if os.path.exists(a) or not any(ch in a for ch in "*?["):
+            hits = [a]
+        else:
+            hits = sorted(glob.glob(a))
+            if not hits:
+                unmatched.append(a)
+        files += [h for h in hits if h not in files]
+    return files, unmatched
 
 
 def read(path) -> tuple[list[dict], list[int]]:

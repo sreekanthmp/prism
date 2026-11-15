@@ -14,8 +14,10 @@ from contextlib import asynccontextmanager
 from pathlib import Path
 
 from fastapi import Body, FastAPI, HTTPException, Request, WebSocket, WebSocketDisconnect
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, HTMLResponse, RedirectResponse
+from fastapi.staticfiles import StaticFiles
 
+from . import chart as chart_view
 from . import instance, risk
 from .auth import AngelSession
 from .candles import TIMEFRAMES
@@ -29,6 +31,7 @@ from .trades import TradeLog
 
 log = logging.getLogger(__name__)
 STATIC = Path(__file__).parent / "static"
+APP_DIST = STATIC / "app"  # the dashboard (React, Stage 9), built by `npm run build` in frontend/ and committed, so Prism still runs with Python only
 PUSH_INTERVAL = 0.25  # seconds; ticks arrive faster than the dashboard needs
 JOURNAL_DEFAULT = Path(__file__).resolve().parent.parent / "logs"  # beside the app, whichever folder it is started from (it used to be "logs" of the folder it was started in)
 
@@ -67,6 +70,15 @@ def setup_logging() -> None:
         h.setFormatter(fmt)
         root.addHandler(h)
     root.setLevel(logging.INFO)
+
+
+class AppFiles(StaticFiles):
+    """The built React dashboard. Revalidated on every load (an ETag makes that a cheap 304), so a rebuilt dashboard is the one the next load gets."""
+
+    def file_response(self, *args, **kwargs):
+        response = super().file_response(*args, **kwargs)
+        response.headers["Cache-Control"] = "no-cache"
+        return response
 
 
 def same_origin(request: Request) -> None:
@@ -164,7 +176,23 @@ def create_app(md: MarketData | None = None, feed: Feed | None = None) -> FastAP
 
     @app.get("/")
     def dashboard():
-        return FileResponse(STATIC / "index.html")
+        """The dashboard: the React page (since the cutover of Stage 9.8 it is THE dashboard; the page it replaced is gone). Revalidated on every load, so a rebuilt dashboard is the one the next load gets. Its files
+        are under /app/assets (the build's address)."""
+        index = APP_DIST / "index.html"
+        if index.is_file():
+            return FileResponse(index, headers={"Cache-Control": "no-cache"})
+        return HTMLResponse(
+            "<!doctype html><title>Prism: the dashboard is not built</title><body style=\"font-family:sans-serif;max-width:40em;margin:3em auto\"><h1>The dashboard is not built</h1>"
+            "<p>Prism is running, and its data is available at <code>/api/state</code>, but the dashboard's files are missing. Build them once, then reload this page:</p>"
+            "<pre>cd frontend\nnpm ci\nnpm run build</pre></body>",
+            status_code=503,
+        )
+
+    @app.get("/app")
+    @app.get("/app/")
+    def old_address():
+        """The dashboard was at /app while the page it replaced was still at /: a bookmark of that address goes to the dashboard (the #tab of the bookmark is kept by the browser)."""
+        return RedirectResponse("/", status_code=307)
 
     @app.get("/api/state")
     def state():
@@ -186,6 +214,14 @@ def create_app(md: MarketData | None = None, feed: Feed | None = None) -> FastAP
         md = app.state.md
         with md.lock, reading():
             return md.safe_options(md.safe_trading(), md.clock())
+
+    @app.get("/api/chart")
+    def chart(timeframe: str = "5m", limit: int = chart_view.DEFAULT_LIMIT):
+        """The data of the React dashboard's Chart tab: NIFTY's candles for one timeframe (1m, 5m, 15m, 1h, 1d) and what Prism itself has computed on them (EMAs, swings, previous-day levels,
+        support and resistance, the live setups). Read-only and memory-only: no database or broker call, nothing evaluated, nothing journalled."""
+        if timeframe not in chart_view.TIMEFRAMES:
+            raise HTTPException(422, f"timeframe must be one of {list(chart_view.TIMEFRAMES)}")
+        return chart_view.view(app.state.md, timeframe, limit)
 
     @app.get("/api/health")
     def health():
@@ -332,6 +368,11 @@ def create_app(md: MarketData | None = None, feed: Feed | None = None) -> FastAP
             pass
         finally:
             clients.discard(ws)
+
+    if (APP_DIST / "index.html").is_file():  # the dashboard's files (the page itself is served at /)
+        app.mount("/app", AppFiles(directory=APP_DIST, html=True), name="app")
+    else:
+        log.warning("the dashboard is not built (no %s): / says so and serves no page. Run `npm ci && npm run build` in frontend/", APP_DIST / "index.html")
 
     return app
 

@@ -683,7 +683,9 @@ def test_the_real_close_book_goes_through_the_checks_with_the_numbers_the_flags_
 
 
 def test_volume_and_open_interest_are_labelled_as_units_everywhere_they_are_shown():
-    html = (ROOT / "app" / "static" / "index.html").read_text(encoding="utf-8")
+    from dashboard_harness import dashboard_source
+
+    html = dashboard_source()  # the dashboard's own source: the wording it promises
     for label in ("Volume (units)", "Open interest (units)", "Day volume (units)", "1 lot = ", "Bid × units"):
         assert label in html, label
     c = contract(24500)
@@ -692,21 +694,3 @@ def test_volume_and_open_interest_are_labelled_as_units_everywhere_they_are_show
     assert "99,999 units" in text and "100,000 units" in text and not re.search(r"volume 99,999 (is|and)", text)  # the unit is in the sentence, not only in a column header
     thin = row_of([(c, quote(c, 150.0, bq=20, aq=900))], c)
     assert "20 units" in next(f["text"] for f in thin["flags"] if f["code"] == "thin_top_quantity") and "75 units" in next(f["text"] for f in thin["flags"] if f["code"] == "thin_top_quantity")
-
-
-def test_the_dashboard_script_is_valid_javascript(tmp_path):
-    """The unit tests cannot see JavaScript, and one syntax error (a quote inside a quoted string) blanks the whole dashboard: so the page's script is
-    syntax-checked with node when it is installed. (This exact mistake was made once, in a label edit, and found only in a browser.)"""
-    import shutil
-    import subprocess
-
-    node = shutil.which("node")
-    if node is None:
-        pytest.skip("node is not installed: the dashboard script was not syntax-checked")
-    html = (ROOT / "app" / "static" / "index.html").read_text(encoding="utf-8")
-    scripts = re.findall(r"<script>(.*?)</script>", html, re.S)
-    assert len(scripts) == 1
-    path = tmp_path / "dashboard.js"
-    path.write_text(scripts[0], encoding="utf-8")
-    done = subprocess.run([node, "--check", str(path)], capture_output=True, text=True, timeout=60)
-    assert done.returncode == 0, done.stderr[:400]

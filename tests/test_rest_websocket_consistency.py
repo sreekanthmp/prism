@@ -41,7 +41,8 @@ PATHS = ["/api/state", "/api/analysis", "/api/trading", "/api/options", "/api/he
 # The transport: the real application, called as an ASGI server calls it
 # ====================================================================================================================
 def scope(kind, path):
-    base = {"type": kind, "asgi": {"version": "3.0"}, "path": path, "raw_path": path.encode(), "query_string": b"", "headers": [], "root_path": "",
+    path, _, query = path.partition("?")  # (a path may carry a query string: /api/chart?timeframe=5m)
+    base = {"type": kind, "asgi": {"version": "3.0"}, "path": path, "raw_path": path.encode(), "query_string": query.encode(), "headers": [], "root_path": "",
             "server": ("127.0.0.1", 8000), "client": ("127.0.0.1", 50000)}  # fmt: skip
     return {**base, "scheme": "http", "method": "GET", "http_version": "1.1"} if kind == "http" else {**base, "scheme": "ws", "subprotocols": []}
 
@@ -383,7 +384,8 @@ def test_the_routes_are_exactly_the_existing_ones():
     ours = sorted(r.path for r in app.routes if r.path == "/" or r.path.startswith("/api") or r.path == "/ws")
     existing = ["/", "/api/analysis", "/api/candles/{token}/{timeframe}", "/api/health", "/api/journal", "/api/options", "/api/readiness", "/api/state", "/api/trading", "/ws"]
     stage8 = ["/api/risk", "/api/trades", "/api/trades", "/api/trades/{trade_id}/void"]  # Stage 8: the notebook of your own trades (GET + POST on /api/trades, a void) and the size calculator
-    assert ours == sorted(existing + stage8)
+    stage9 = ["/api/chart"]  # Stage 9.2: the React dashboard's Chart tab (a read of candles Prism already holds)
+    assert ours == sorted(existing + stage8 + stage9)
     src = inspect.getsource(create_app)
     assert src.count("md.snapshot()") == 3  # GET /api/state, the WebSocket's first message and the ticker's push all send the engine's one snapshot: no snapshot is assembled anywhere else
 
