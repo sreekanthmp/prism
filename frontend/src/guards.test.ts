@@ -15,7 +15,7 @@ describe("the source of the dashboard", () => {
         "App.tsx", "alerts.ts", "connection.ts", "format.ts", "main.tsx", "types.ts", "useConnection.ts", "components/Header.tsx", "components/AlertLine.tsx", "components/Tabs.tsx", "components/StaleBar.tsx",
         "chartTypes.ts", "chartApi.ts", "chartModel.ts", "useChart.ts", "components/ChartTab.tsx", "components/PriceChart.tsx",
         "overviewModel.ts", "components/Overview.tsx", "components/OverviewPanels.tsx", "components/Decision.tsx", "optionsModel.ts", "components/Options.tsx", "journalModel.ts", "journalApi.ts", "useJournal.ts", "components/Journal.tsx",
-        "alertEvents.ts", "alertEffects.ts", "useAlerts.ts", "tradesApi.ts", "tradesModel.ts", "useTrades.ts", "useRisk.ts", "components/Trades.tsx", "analysisModel.ts", "components/Analysis.tsx", "components/AnalysisStrategies.tsx", "components/AnalysisTables.tsx", "components/AnalysisHealth.tsx",
+        "checklistModel.ts", "components/Checklist.tsx", "alertEvents.ts", "alertEffects.ts", "useAlerts.ts", "tradesApi.ts", "tradesModel.ts", "useTrades.ts", "useRisk.ts", "components/Trades.tsx", "analysisModel.ts", "components/Analysis.tsx", "components/AnalysisStrategies.tsx", "components/AnalysisTables.tsx", "components/AnalysisHealth.tsx",
       ]),
     );
   });

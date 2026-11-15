@@ -1,10 +1,13 @@
 import { Component, type ErrorInfo, type ReactNode } from "react";
+import { NO_TICKS, type Ticks } from "../checklistModel";
 import { liveSetup } from "../overviewModel";
 import type { Analysis, Snapshot } from "../types";
+import { Checklist } from "./Checklist";
 import { DecisionBanner } from "./Decision";
 import { CurrentSetup, CurrentSetupTitle, DataHealth, MarketContext, Panel, RecentEvents, RegimeBody, StrategyMonitorBody, Timeframes, type Goto } from "./OverviewPanels";
 
 const WAITING = <span className="mut">waiting for data</span>;
+const noTick = () => undefined; // (the Overview on its own, with no state above it, ticks nothing)
 
 /** Before the first snapshot there is no decision: the page says so, and every panel says it is waiting. Nothing on it is a decision. */
 function Loading({ tries }: { tries: number }) {
@@ -36,35 +39,38 @@ function Loading({ tries }: { tries: number }) {
 const HowTo = () => (
   <details className="sec" id="howto" style={{ margin: "6px 0 0" }}>
     <summary>
-      How to use this page <span className="mut">before a manual trade: read top to bottom, it takes a few seconds</span>
+      How to use this page <span className="mut">7 quick steps before a manual trade</span>
     </summary>
     <div className="secbody howto">
-      <div>
-        <b>1. Is the data safe?</b> The header must say <b className="up">MARKET OPEN</b>, <b className="up">FEED CONNECTED</b> and <b className="up">DATA TRUSTED</b>. A red or grey chip (<b>UNKNOWN</b> means the page lost its link), or a red alert line under the tabs (click it for every alert), means do not trade on this screen.
+      <div className="hstep">
+        <b>1. Check the data.</b> The top bar must be green: <b className="up">MARKET OPEN</b>, <b className="up">FEED CONNECTED</b>, <b className="up">DATA TRUSTED</b>. If anything is red, grey or <b className="down">STALE</b>, do not trade from this screen.
       </div>
-      <div>
-        <b>2. What is the decision?</b> Only <b className="up">BUY CE</b> or <b className="down">BUY PE</b> means a setup passed the rules. <b className="flat">WAIT</b> and <b className="neu">NO TRADE</b> mean stay out; the line beside it says why.
+      <div className="hstep">
+        <b>2. Read the decision.</b> <b className="up">BUY CE</b> (a call) or <b className="down">BUY PE</b> (a put) means a setup passed Prism's rules. <b className="flat">WAIT</b> or <b className="neu">NO TRADE</b> means stay out; the line beside it says why.
       </div>
-      <div>
-        <b>3. Can I enter now?</b> The <b>Entry</b> line must say the setup is eligible right now. "Not eligible" means the setup is confirmed but price is not in the entry area, or something blocks it. If the page says <b className="down">STALE</b>, it has lost its link to Prism: nothing on it is current, whatever it shows.
+      <div className="hstep">
+        <b>3. Check "Entry".</b> It must say "eligible". "Not eligible" means wait.
       </div>
-      <div>
-        <b>4. Do the timeframes agree?</b> <b>1H and 15M</b> must point the same way as the side. 5M and 1M are information only.
+      <div className="hstep">
+        <b>4. Check the trend.</b> The <b>1H</b> and <b>15M</b> should agree with the trade: up for a call, down for a put.
       </div>
-      <div>
-        <b>5. Where is the idea wrong?</b> <b>Current setup</b> shows the trigger, the entry zone and the invalidation level. If price closes beyond the invalidation, the setup is over. You choose your own stop and size.
+      <div className="hstep">
+        <b>5. Know your exit.</b> <b>Current setup</b> shows the trigger, the entry zone and the invalidation. If price closes past the invalidation, the idea is wrong. Choose your own stop and size.
       </div>
-      <div>
-        <b>6. Which option?</b> Only for a BUY: open the <b>Options</b> tab. The contract must be <b className="up">FRESH</b> with a tight spread and no blocking findings. "No suitable contract" means no option trade.
+      <div className="hstep">
+        <b>6. Pick the option.</b> For a BUY only: open the <b>Options</b> tab. The contract should be <b className="up">FRESH</b> with a tight spread.
       </div>
-      <div>
-        <b>Alerts.</b> The <b>🔔</b> button in the header chooses what tells you when a setup becomes ready, stops being ready, or the data stops being trustworthy: <b>sound + popup</b>, <b>sound</b> or <b>off</b>. A sound needs one click on this page first (a browser rule); a popup needs your browser's permission. The log under the tabs keeps the last few.
+      <div className="hstep">
+        <b>7. Use the checklist.</b> The <b>Checklist</b> button beside "Explain this decision" gathers all this, plus five things only you can check.
       </div>
-      <div>
-        <b>Your own trades.</b> The <b>Trades</b> tab is a notebook: log what you bought and sold (Prism places nothing and reads no account) and it keeps what Prism said at that moment, shows the day's realised result against a loss limit you set (<code>RISK_MAX_DAILY_LOSS</code>), and sizes a trade to your stop.
+      <div className="hnote mut">
+        <b>Then you decide.</b> Prism places no orders: trade in Angel One yourself, then review the day in the <b>Journal</b>.
       </div>
-      <div>
-        <b>7. Then you decide.</b> Prism describes the NIFTY index and places no orders. Enter, size and exit yourself in Angel One. Use <b>Journal</b> afterwards to review what Prism said and why. <b>Analysis</b> holds the detail behind the decision.
+      <div className="hnote mut">
+        <b>🔔</b> in the header plays a sound when a setup becomes ready (click the page once first: the browser needs it).
+      </div>
+      <div className="hnote mut">
+        <b>Trades</b> tab: log your own trades and size them from your stop. Prism sees no account.
       </div>
     </div>
   </details>
@@ -75,7 +81,7 @@ const HowTo = () => (
  * timeframes, market context, the current setup, the strategy monitor, the regime, data health and the latest events. `stale` is the page's link state: the last snapshot is shown, and
  * never as a current decision.
  */
-export function Overview({ snapshot, tries, stale, onGoto }: { snapshot: Snapshot | null; tries: number; stale: boolean; onGoto: Goto }) {
+export function Overview({ snapshot, tries, stale, onGoto, ticks = NO_TICKS, onTick = noTick }: { snapshot: Snapshot | null; tries: number; stale: boolean; onGoto: Goto; ticks?: Ticks; onTick?: (key: string, item: string) => void }) {
   if (!snapshot) return <Loading tries={tries} />;
   const t = snapshot.trading;
   if (!t) {
@@ -92,7 +98,7 @@ export function Overview({ snapshot, tries, stale, onGoto }: { snapshot: Snapsho
   const x = liveSetup(t);
   return (
     <>
-      <DecisionBanner s={snapshot} t={t} liveSetup={x} stale={stale} />
+      <DecisionBanner s={snapshot} t={t} liveSetup={x} stale={stale} extra={<Checklist s={snapshot} t={t} stale={stale} ticks={ticks} onTick={onTick} onGoto={onGoto} />} />
       <Timeframes a={a} note={t.explain?.note ?? ""} />
       <div className="cols">
         <div className="col">

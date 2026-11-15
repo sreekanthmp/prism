@@ -4,6 +4,7 @@ import { App } from "../App";
 import { base, EVIL, FakeSocket, fakeFactory, variant } from "../test/helpers";
 import type { Setup, Snapshot } from "../types";
 import { Overview } from "./Overview";
+import { TABS } from "./Tabs";
 
 // The current dashboard's Overview and this one are compared in a real browser, in each of the 14 pinned states (tests/test_overview_browser.py). These tests are the branches one by one, on the real
 // snapshot of the engine (tests/make_frontend_fixture.py): a BUY CE at 10:55 on 06 Nov 2026, with its trigger, entry area, invalidation and one target.
@@ -518,13 +519,49 @@ describe("what a server says is only ever text", () => {
 });
 
 describe("the how-to", () => {
-  it("is there, closed, with all its steps", () => {
+  const howto = () => el("howto") as HTMLDetailsElement;
+  const steps = () => [...howto().querySelectorAll(".howto > .hstep")].map((d) => d.textContent ?? "");
+  const notes = () => [...howto().querySelectorAll(".howto > .hnote")].map((d) => d.textContent ?? "");
+
+  it("is there, closed, with seven numbered steps and three short notes, in one column", () => {
     show(base);
-    const d = el("howto") as HTMLDetailsElement;
-    expect(d.open).toBe(false);
-    expect(d.querySelector("summary")?.textContent).toBe("How to use this page before a manual trade: read top to bottom, it takes a few seconds");
-    expect(d.querySelectorAll(".howto > div")).toHaveLength(9);
-    expect(d.textContent).toContain("Prism describes the NIFTY index and places no orders. Enter, size and exit yourself in Angel One.");
+    expect(howto().open).toBe(false);
+    expect(howto().querySelector("summary")?.textContent).toBe("How to use this page 7 quick steps before a manual trade");
+    expect([...howto().querySelectorAll(".howto > .hstep > b:first-child")].map((b) => b.textContent)).toEqual([
+      "1. Check the data.", "2. Read the decision.", '3. Check "Entry".', "4. Check the trend.", "5. Know your exit.", "6. Pick the option.", "7. Use the checklist.",
+    ]); // fmt: skip
+    expect(howto().querySelectorAll(".howto > div")).toHaveLength(10); // (nothing else is in it)
+  });
+
+  it("says each step in plain words", () => {
+    show(base);
+    expect(steps()).toEqual([
+      "1. Check the data. The top bar must be green: MARKET OPEN, FEED CONNECTED, DATA TRUSTED. If anything is red, grey or STALE, do not trade from this screen.",
+      "2. Read the decision. BUY CE (a call) or BUY PE (a put) means a setup passed Prism's rules. WAIT or NO TRADE means stay out; the line beside it says why.",
+      '3. Check "Entry". It must say "eligible". "Not eligible" means wait.',
+      "4. Check the trend. The 1H and 15M should agree with the trade: up for a call, down for a put.",
+      "5. Know your exit. Current setup shows the trigger, the entry zone and the invalidation. If price closes past the invalidation, the idea is wrong. Choose your own stop and size.",
+      "6. Pick the option. For a BUY only: open the Options tab. The contract should be FRESH with a tight spread.",
+      '7. Use the checklist. The Checklist button beside "Explain this decision" gathers all this, plus five things only you can check.',
+    ]); // fmt: skip
+    expect(notes()).toEqual([
+      "Then you decide. Prism places no orders: trade in Angel One yourself, then review the day in the Journal.",
+      "🔔 in the header plays a sound when a setup becomes ready (click the page once first: the browser needs it).",
+      "Trades tab: log your own trades and size them from your stop. Prism sees no account.",
+    ]); // fmt: skip
+  });
+
+  it("is short: no step is a wall of text, and the whole is under two thirds of what it was", () => {
+    show(base);
+    for (const s of steps()) expect(s.length, s).toBeLessThanOrEqual(180);
+    expect(steps().join("").length + notes().join("").length).toBeLessThanOrEqual(1312); // (two thirds of the 1,969 characters of the nine blocks it replaced)
+  });
+
+  it("names the checklist that is really on the page, and the button the notes name", () => {
+    show(base);
+    expect(document.querySelector("#decision #pretrade > summary")?.textContent).toMatch(/^Checklist /);
+    expect(document.querySelector("#decision details.pop:not(#pretrade) > summary")?.textContent).toBe("Explain this decision ▾");
+    for (const label of ["Options", "Trades", "Journal", "Analysis"]) expect(TABS.map((t) => t.label)).toContain(label); // (the tabs the steps send the reader to exist, by those names)
   });
 });
 

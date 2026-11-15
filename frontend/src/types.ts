@@ -161,6 +161,8 @@ export interface Explain {
 export interface Session {
   phase: string;
   entries_allowed: boolean;
+  strict?: boolean; // the midday window: stricter confirmation
+  note?: string; // the session's own words ("opening range forming: no entries before 09:30")
   opening_range: { high: number; low: number; complete: boolean } | null;
 }
 export interface RegimeCheck {
