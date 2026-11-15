@@ -57,6 +57,9 @@ export function ExplainBlock({ e }: { e: Explain | null | undefined }) {
   );
 }
 
+/** The floating panels of the banner ("Explain this decision", the checklist) share one name: the browser then keeps one of them open at a time, so two never lie over each other. */
+export const POP_GROUP = { name: "pop" };
+
 const did = (k: string, v: ReactNode) => (
   <span>
     <span className="k">{k}</span>
@@ -69,7 +72,7 @@ const idCode = (v: string | null | undefined) => (v ? <code title={v}>{v}</code>
  * The decision: the one block that says what to do, in the colour of the answer. On a stale page it says STALE and the last decision as history, never as a decision. The "Explain this decision" popup holds
  * the same facts in plain words (it opens over the page, and stays open while the page updates once a second).
  */
-export function DecisionBanner({ s, t, liveSetup, stale }: { s: Snapshot; t: Trading; liveSetup: Setup | null; stale: boolean }) {
+export function DecisionBanner({ s, t, liveSetup, stale, extra }: { s: Snapshot; t: Trading; liveSetup: Setup | null; stale: boolean; extra?: ReactNode }) {
   const d = t.decision;
   const ex = t.explain ?? null;
   const se = t.session;
@@ -110,7 +113,7 @@ export function DecisionBanner({ s, t, liveSetup, stale }: { s: Snapshot; t: Tra
         </div>
         <div className="go">
           <span>Entry {entry}</span>
-          <details className="pop">
+          <details className="pop" {...POP_GROUP}>
             <summary>Explain this decision ▾</summary>
             <div className="popbody">
               {stale ? <div className="warnbox">The last snapshot (made {fmtT(s.server_time)} IST): not a current decision.</div> : null}
@@ -152,6 +155,7 @@ export function DecisionBanner({ s, t, liveSetup, stale }: { s: Snapshot; t: Tra
               ) : null}
             </div>
           </details>
+          {extra}
         </div>
       </div>
     </div>

@@ -130,8 +130,21 @@ details.pop > .popbody { position:absolute; left:0; right:0; top:100%; z-index:2
 .strat { width:100%; border-collapse:collapse; } .strat td { padding:2px 4px; border-top:1px solid var(--line); vertical-align:baseline; } .strat tr:first-child td { border-top:0; }
 .strat td.why { color:var(--mut); max-width:0; width:100%; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 .pillst { font-size:10.5px; font-weight:700; text-transform:uppercase; letter-spacing:.04em; padding:1px 6px; border:1px solid currentColor; border-radius:3px; white-space:nowrap; }
-.howto { display:grid; grid-template-columns:repeat(2, minmax(0,1fr)); gap:6px 24px; } .howto > div { line-height:1.4; }
-@media (max-width:900px) { .howto { grid-template-columns:minmax(0,1fr); } }
+.howto { display:grid; grid-template-columns:minmax(0,1fr); gap:7px; max-width:110ch; } .howto > div { line-height:1.5; font-size:13px; } .howto .hnote { font-size:12px; border-top:1px solid var(--line); padding-top:6px; } .howto .hnote + .hnote { border-top:0; padding-top:0; }
+/* the pre-trade checklist: a floating panel in the decision banner (like "Explain this decision"), so it moves nothing; what Prism can answer (left), what only the reader can know (right) */
+details.pretrade > .popbody { white-space:normal; color:var(--fg); font-size:12px; line-height:1.3; cursor:auto; max-height:calc(100vh - 200px); } /* all thirteen rows in view on a 1366x768 screen: the decision and the option are the rows read last */
+.ptsum { margin-bottom:6px; } .ptsum b { font-size:13px; }
+.ptgrid { display:grid; grid-template-columns:minmax(0,3fr) minmax(0,2fr); gap:6px 24px; }
+.ptgrid h4 { margin:8px 0 3px; font-size:10.5px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; color:var(--mut); } .ptgrid > div > div:first-child h4, .ptgrid > div:last-child > h4 { margin-top:0; }
+.ptlist { list-style:none; margin:0; padding:0; }
+.ptrow { display:grid; grid-template-columns:84px minmax(0,1fr) auto; gap:0 8px; align-items:baseline; padding:1px 0; border-bottom:1px solid var(--line); } .ptrow:last-child { border-bottom:0; }
+.ptchip { font-size:10.5px; font-weight:700; letter-spacing:.04em; text-transform:uppercase; white-space:nowrap; }
+.ptmain { min-width:0; } .ptlabel { display:block; font-weight:600; } .pttext { display:block; font-size:11.5px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.ptman { display:flex; justify-content:space-between; align-items:flex-start; gap:8px; border-bottom:1px solid var(--line); } .ptman:last-child { border-bottom:0; }
+.ptmanual { display:flex; gap:8px; align-items:flex-start; padding:3px 0; cursor:pointer; min-width:0; } .ptmanual input { margin-top:3px; flex:none; } .ptmanual b { display:block; font-weight:600; } .ptmanual small { display:block; font-size:11px; }
+.ptmanual input:disabled + span { opacity:.6; } .ptman .linkbtn { padding-top:3px; white-space:nowrap; }
+.ptnote { font-size:11.5px; margin:6px 0 0; }
+@media (max-width:900px) { .ptgrid { grid-template-columns:minmax(0,1fr); } .pttext { white-space:normal; } }
 .evrow { display:grid; grid-template-columns:44px 26px 150px 168px minmax(0,1fr); gap:0 12px; align-items:baseline; padding:2px 0; }
 details.evd > summary { list-style:none; cursor:pointer; } details.evd > summary::-webkit-details-marker { display:none; }
 .evmore { color:var(--acc); font-size:11px; white-space:nowrap; } details.evd[open] .evmore { display:none; }

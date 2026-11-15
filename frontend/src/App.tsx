@@ -6,6 +6,7 @@ import { StaleBar } from "./components/StaleBar";
 import { Tabs, TABS, useTab } from "./components/Tabs";
 import { useCallback, useMemo, useRef, useState } from "react";
 import { DEFAULT_OPEN } from "./analysisModel";
+import { NO_TICKS, toggleTick, type Ticks } from "./checklistModel";
 import { JOURNAL_OPEN } from "./journalModel";
 import { useAlerts } from "./useAlerts";
 import { useJournal } from "./useJournal";
@@ -36,6 +37,8 @@ export function App({ url, createSocket, fetchChart, fetchJournal, api }: { url?
   const risk = useRisk(api);
   const [tab, setTab] = useTab();
   const [chartPrefs, setChartPrefs] = useState<ChartPrefs>(defaultPrefs); // kept here: leaving the Chart tab and coming back finds it as it was left
+  const [ticks, setTicks] = useState<Ticks>(NO_TICKS); // the pre-trade checklist's own boxes, for the setup that is live: kept here so a visit to the Options or Trades tab (to check a contract, to size a trade) does not lose them
+  const tick = useCallback((key: string, item: string) => setTicks((prev) => toggleTick(prev, key, item)), []);
   // Which sections of the Analysis tab are open is the reader's, and is kept here for the same reason (the current dashboard keeps it too). A strategy that holds a live setup opens by itself once.
   const [openKeys, setOpenKeys] = useState<Set<string>>(() => new Set([...DEFAULT_OPEN, ...JOURNAL_OPEN]));
   const autoOpened = useRef(new Set<string>());
@@ -82,7 +85,7 @@ export function App({ url, createSocket, fetchChart, fetchJournal, api }: { url?
           <section key={t.id} className="tab" id={`tab-${t.id}`} role="tabpanel" aria-labelledby={`tb-${t.id}`} hidden={tab !== t.id}>
             {tab !== t.id ? null : t.id === "overview" ? (
               <DrawGuard name="overview" resetKey={snapshot}>
-                <Overview snapshot={snapshot} tries={tries} stale={stale} onGoto={goto} />
+                <Overview snapshot={snapshot} tries={tries} stale={stale} onGoto={goto} ticks={ticks} onTick={tick} />
               </DrawGuard>
             ) : t.id === "journal" ? (
               <DrawGuard name="journal" resetKey={journalDraw}>
