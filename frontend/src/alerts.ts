@@ -18,7 +18,7 @@ export function stateAlerts(h: Health): AlertItem[] {
   const items: AlertItem[] = [];
   const rd = h.readiness;
   if (rd && !rd.ready) items.push({ sev: rd.state === "FAILED" ? "bad" : "warn", head: `NOT READY · ${words(rd.state)}`, text: `${rd.summary}. Decisions are blocked until the data is complete and trusted.` });
-  for (const w of h.issues ?? []) items.push({ sev: "bad", head: "Data not trusted", text: `${w}. No BUY decision is possible until this is fixed.` });
+  for (const w of h.issues ?? []) items.push({ sev: "bad", head: "Data not trusted", text: `${w}. No setup can be ready until this is fixed.` });
   for (const w of h.warnings ?? []) items.push({ sev: "warn", head: "", text: w });
   return items;
 }

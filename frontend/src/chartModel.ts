@@ -1,5 +1,6 @@
 import type { ChartData, ChartSetup, LinePoint, Moment, Swing } from "./chartTypes";
 import { DASH, fmtT, n1, n2 } from "./format";
+import { actionSaid, plain } from "./labels";
 import type { JournalRow } from "./types";
 
 // Everything the chart draws is worked out here, as plain data, so it can be tested without a canvas. The component that owns the canvas (components/PriceChart.tsx) only hands it over.
@@ -91,20 +92,26 @@ export function swingMarkers(swings: Swing[] | undefined, bars: Bar[]): Marker[]
 export interface Toggles {
   ema20: boolean;
   ema50: boolean;
-  swings: boolean;
-  levels: boolean;
+  levels: boolean; // the key levels: yesterday's high, low and close, today's open, the nearest support below and the nearest resistance above the price
+  moreLevels: boolean; // every other support and resistance Prism found
   setups: boolean;
+  swings: boolean; // an H or L at every confirmed swing high and low
   decisions: boolean; // where Prism's decision changed today (from the journal)
 }
-export const TOGGLES: { id: keyof Toggles; label: string }[] = [
-  { id: "ema20", label: "EMA 20" },
-  { id: "ema50", label: "EMA 50" },
-  { id: "swings", label: "Swings" },
-  { id: "levels", label: "Levels" },
-  { id: "setups", label: "Setups" },
-  { id: "decisions", label: "Decisions" },
+/** The controls under the chart, in the order they are drawn: the lines first, then the marks. Each says in plain words what it puts on the chart (its hover text). */
+export const TOGGLES: { id: keyof Toggles; label: string; hint: string }[] = [
+  { id: "ema20", label: "EMA 20", hint: "The fast moving average of the close (purple). Price above it leans up." },
+  { id: "ema50", label: "EMA 50", hint: "The slow moving average of the close (teal). The fast one above the slow one leans up." },
+  { id: "levels", label: "Key levels", hint: "Yesterday's high, low and close, today's open, and the nearest support below the price and resistance above it. Levels that sit close together are drawn once." },
+  { id: "moreLevels", label: "More levels", hint: "Every other support and resistance Prism found. A lot of lines, so it is off to begin with." },
+  { id: "setups", label: "Setup lines", hint: "While Prism has a live setup: its trigger, entry area, invalidation and targets." },
+  { id: "swings", label: "Swings", hint: "An H at every confirmed swing high and an L at every swing low today. A lot of arrows, so it is off to begin with." },
+  { id: "decisions", label: "Decisions", hint: "Where Prism's decision changed today: CE setup, PE setup, WAIT, NO TRADE." },
 ];
-export const allOn: Toggles = { ema20: true, ema50: true, swings: true, levels: true, setups: true, decisions: true };
+export const allOn: Toggles = { ema20: true, ema50: true, levels: true, moreLevels: true, setups: true, swings: true, decisions: true };
+/** What the chart shows to begin with: the candles, the two averages, the key levels, the setup's lines and where the decision changed. The swings and the other levels are one click away. */
+export const simpleOn: Toggles = { ...allOn, moreLevels: false, swings: false };
+export const sameToggles = (a: Toggles, b: Toggles): boolean => (Object.keys(allOn) as (keyof Toggles)[]).every((k) => a[k] === b[k]);
 
 export type Role = "trigger" | "zone" | "invalidation" | "target" | "previous" | "open" | "support" | "resistance";
 export interface Overlay {
@@ -116,19 +123,82 @@ export interface Overlay {
 }
 const fin = (x: number | null | undefined): x is number => typeof x === "number" && Number.isFinite(x);
 
-/** The horizontal lines: the previous day's high, low and close, the session open, the nearest support and resistance (all under "Levels"), and each live setup's trigger, entry area, invalidation and targets. */
+const touches = (n: number): string => `${n} touch${n === 1 ? "" : "es"}`;
+/** The price the chart is at: the answer's own, else the forming candle's close, else the last closed candle's. */
+const priceOf = (data: ChartData): number | null => {
+  if (fin(data.price)) return data.price;
+  if (data.forming && fin(data.forming.close)) return data.forming.close;
+  const last = data.candles[data.candles.length - 1];
+  return last && fin(last.close) ? last.close : null;
+};
+
+/** A level line, and whether it is a key one (it is drawn under "Key levels") or one of the others (under "More levels"). `name` is what it is called when it shares a label with another. */
+export interface LevelLine extends Overlay {
+  core: boolean;
+  name: string;
+}
+
+/**
+ * Every level Prism sent, named in words: yesterday's high, low and close, today's open, and the supports and resistances (with how often price turned there). The key ones are those a trader looks
+ * at first: the four of the day before and the day, the nearest support at or under the price and the nearest resistance over it. (The server lists supports and resistances nearest first, but a
+ * level that price has crossed since is not the nearest any more, so this goes by the price.)
+ */
+export function levelLines(data: ChartData): LevelLine[] {
+  const lv = data.levels;
+  if (!lv) return [];
+  const out: LevelLine[] = [];
+  const line = (key: string, price: number, role: Role, title: string, core: boolean, name = title): void => {
+    out.push({ key, price, role, title, focus: false, core, name });
+  };
+  const pd = lv.previous_day;
+  if (pd) {
+    line("pdh", pd.pdh, "previous", "Prev day high", true);
+    line("pdl", pd.pdl, "previous", "Prev day low", true);
+    line("pdc", pd.pdc, "previous", "Prev day close", true);
+  }
+  if (fin(lv.session_open)) line("open", lv.session_open, "open", "Today's open", true);
+  const price = priceOf(data);
+  const nearest = (list: { price: number }[], ok: (p: number) => boolean, better: (a: number, b: number) => boolean): number =>
+    list.reduce((best, l, i) => (ok(l.price) && (best === -1 || better(l.price, (list[best] as { price: number }).price)) ? i : best), -1);
+  const keyS = price === null ? 0 : nearest(lv.support, (p) => p <= price, (a, b) => a > b);
+  const keyR = price === null ? 0 : nearest(lv.resistance, (p) => p > price, (a, b) => a < b);
+  lv.support.forEach((l, i) => line(`s${i}`, l.price, "support", `Support · ${touches(l.touches)}`, i === keyS, "Support"));
+  lv.resistance.forEach((l, i) => line(`r${i}`, l.price, "resistance", `Resistance · ${touches(l.touches)}`, i === keyR, "Resistance"));
+  return out;
+}
+
+/**
+ * Levels that sit closer together than `gap` points would draw their labels on top of one another, so each such group is drawn once, under the most important of them (the previous day's high and low,
+ * then its close, then the open, then the key support and resistance, then the rest) with the others named after it: "Prev day close + Support". The lines come back in the order they came in.
+ */
+export function declutter(lines: LevelLine[], gap: number): Overlay[] {
+  const rank = (l: LevelLine) => (l.key === "pdh" || l.key === "pdl" ? 0 : l.key === "pdc" ? 1 : l.key === "open" ? 2 : l.core ? 3 : 4);
+  const kept: LevelLine[] = [];
+  const also = new Map<string, string[]>();
+  for (const l of [...lines].sort((p, q) => rank(p) - rank(q))) {
+    const near = kept.find((k) => Math.abs(k.price - l.price) < gap);
+    if (!near) kept.push(l);
+    else also.set(near.key, [...(also.get(near.key) ?? []), l.name]);
+  }
+  return lines
+    .filter((l) => kept.includes(l))
+    .map((l) => ({ key: l.key, price: l.price, role: l.role, focus: l.focus, title: [l.title, ...new Set(also.get(l.key) ?? [])].join(" + ") }));
+}
+
+/** How close two level labels may sit before they are drawn as one: three quarters of a typical candle (the ATR), or a twentieth of a per cent of the price when there is no ATR (the daily chart). */
+const levelGap = (data: ChartData): number => {
+  const atr = data.facts?.atr14_intraday;
+  const price = priceOf(data) ?? 0;
+  return fin(atr) && atr > 0 ? atr * 0.75 : price * 0.0005;
+};
+
+/**
+ * The horizontal lines: the levels the viewer asked for ("Key levels", "More levels"; close ones drawn once) and each live setup's trigger, entry area, invalidation and targets (under "Setup lines").
+ * Each is named in words, so what a line is can be read off its label.
+ */
 export function overlays(data: ChartData, on: Toggles): Overlay[] {
   const out: Overlay[] = [];
-  const lv = data.levels;
-  if (on.levels && lv) {
-    const pd = lv.previous_day;
-    if (pd) {
-      out.push({ key: "pdh", price: pd.pdh, role: "previous", title: "PDH", focus: false }, { key: "pdl", price: pd.pdl, role: "previous", title: "PDL", focus: false }, { key: "pdc", price: pd.pdc, role: "previous", title: "PDC", focus: false });
-    }
-    if (fin(lv.session_open)) out.push({ key: "open", price: lv.session_open, role: "open", title: "Open", focus: false });
-    lv.support.forEach((l, i) => out.push({ key: `s${i}`, price: l.price, role: "support", title: `S${i + 1} ×${l.touches}`, focus: false }));
-    lv.resistance.forEach((l, i) => out.push({ key: `r${i}`, price: l.price, role: "resistance", title: `R${i + 1} ×${l.touches}`, focus: false }));
-  }
+  if (on.levels || on.moreLevels) out.push(...declutter(levelLines(data).filter((l) => (l.core ? on.levels : on.moreLevels)), levelGap(data)));
   if (on.setups) {
     for (const s of data.setups) {
       const d = s.direction;
@@ -168,8 +238,8 @@ function barAt(bars: Bar[], at: number, seconds: number): Bar | null {
 }
 
 function markerOf(time: ChartTime, action: string): DecisionMarker {
-  if (action === "BUY CE") return { time, position: "belowBar", shape: "arrowUp", tone: "ok", text: "BUY CE", size: 1.2, action };
-  if (action === "BUY PE") return { time, position: "aboveBar", shape: "arrowDown", tone: "bad", text: "BUY PE", size: 1.2, action };
+  if (action === "BUY CE") return { time, position: "belowBar", shape: "arrowUp", tone: "ok", text: "CE setup", size: 1.2, action };
+  if (action === "BUY PE") return { time, position: "aboveBar", shape: "arrowDown", tone: "bad", text: "PE setup", size: 1.2, action };
   if (action === "WAIT") return { time, position: "belowBar", shape: "circle", tone: "warn", text: "", size: 0.8, action };
   return { time, position: "belowBar", shape: "circle", tone: "mut", text: "", size: 0.6, action }; // NO TRADE and anything else
 }
@@ -210,8 +280,6 @@ export interface Detail {
   decisions: string[]; // BUY CE at 10:55: Trend Pullback setup confirmed
 }
 
-const LEVEL_ROLES: Role[] = ["previous", "open", "support", "resistance"];
-
 /**
  * What the candle under the mouse (or the latest one) says beyond its four prices: how big it was (in points and in the ATR), whether it closed up or down and by how much, where it closed against the two
  * EMAs, the nearest level under it and over it (the previous day's high, low and close, the session open, the support and the resistance), and what Prism's decision said on it. All of it worked out from
@@ -230,7 +298,7 @@ export function detailFor(data: ChartData, bars: Bar[], index: number, rows?: Jo
     return `${n2(value)} (the close is ${Math.abs(d) < 0.005 ? "on it" : `${n2(Math.abs(d))} ${d > 0 ? "above" : "below"}`})`;
   };
   const at = (points: LinePoint[] | undefined) => lineData(points).find((p) => p.time === b.time)?.value;
-  const refs = overlays(data, { ...allOn, setups: false }).filter((o) => LEVEL_ROLES.includes(o.role));
+  const refs = levelLines(data); // (every level, none drawn as one: the nearest is the nearest)
   const ref = (o: Overlay | undefined): LevelRef | null => {
     if (!o) return null;
     const d = o.price - close;
@@ -247,7 +315,7 @@ export function detailFor(data: ChartData, bars: Bar[], index: number, rows?: Jo
     ema50: against(at(data.ema50)),
     below: ref(below),
     above: ref(above),
-    decisions: said.map((r) => `${r.action} at ${fmtT(r.time, false)}${r.headline ? `: ${r.headline}` : ""}`),
+    decisions: said.map((r) => `${actionSaid(r.action)} at ${fmtT(r.time, false)}${r.headline ? `: ${plain(r.headline)}` : ""}`),
   };
 }
 

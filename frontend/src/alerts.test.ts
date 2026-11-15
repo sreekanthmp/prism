@@ -24,14 +24,14 @@ describe("what is wrong right now", () => {
     for (const state of ["INITIALIZING", "HISTORICAL_LOADING", "RECOVERING_GAPS", "DEGRADED"]) expect(sev(state)).toBe("warn");
   });
 
-  it("each data issue is a serious alert that says no BUY is possible, each warning a plain one", () => {
+  it("each data issue is a serious alert that says no setup can be ready, each warning a plain one", () => {
     const h = variant((s) => {
       s.health.issues = ["5M candles missing 10:25-11:20", "the clock cannot be trusted"];
       s.health.warnings = ["the option quote for NIFTY 24500 CE is 40 s old"];
     }).health;
     expect(stateAlerts(h)).toEqual([
-      { sev: "bad", head: "Data not trusted", text: "5M candles missing 10:25-11:20. No BUY decision is possible until this is fixed." },
-      { sev: "bad", head: "Data not trusted", text: "the clock cannot be trusted. No BUY decision is possible until this is fixed." },
+      { sev: "bad", head: "Data not trusted", text: "5M candles missing 10:25-11:20. No setup can be ready until this is fixed." },
+      { sev: "bad", head: "Data not trusted", text: "the clock cannot be trusted. No setup can be ready until this is fixed." },
       { sev: "warn", head: "", text: "the option quote for NIFTY 24500 CE is 40 s old" },
     ]);
   });

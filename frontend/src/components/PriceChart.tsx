@@ -24,17 +24,31 @@ export function palette() {
 }
 type Palette = ReturnType<typeof palette>;
 
-const STYLE: Record<Role, { color: keyof Palette; style: LineStyle; width: 1 | 2 }> = {
+const STYLE: Record<Role, { color: keyof Palette; style: LineStyle; width: 1 | 2; alpha?: number }> = {
   trigger: { color: "acc", style: LineStyle.Dashed, width: 1 },
   zone: { color: "ok", style: LineStyle.Dotted, width: 1 },
   invalidation: { color: "bad", style: LineStyle.Solid, width: 1 },
   target: { color: "ok", style: LineStyle.Dashed, width: 1 },
   previous: { color: "warn", style: LineStyle.Dotted, width: 1 },
   open: { color: "mut", style: LineStyle.Dotted, width: 1 },
-  support: { color: "mut", style: LineStyle.SparseDotted, width: 1 },
-  resistance: { color: "mut", style: LineStyle.SparseDotted, width: 1 },
+  support: { color: "ok", style: LineStyle.LargeDashed, width: 1, alpha: 0.6 }, // a floor: green, but fainter and longer-dashed than a target, so it is not taken for one
+  resistance: { color: "bad", style: LineStyle.LargeDashed, width: 1, alpha: 0.6 }, // a ceiling: red, likewise
 };
+
+/** A #rrggbb colour with an opacity (the chart takes #rrggbbaa); a colour that is not fully opaque is the only one that changes: anything else is returned as it is. */
+export const withAlpha = (color: string, alpha: number): string => (alpha < 1 && /^#[0-9a-f]{6}$/i.test(color) ? color + Math.round(alpha * 255).toString(16).padStart(2, "0") : color);
+
+/**
+ * How a kind of line looks, as the page's own CSS says it (a colour variable, a border style, an opacity): the controls under the chart draw a sample of it next to each name, so the colour of a line
+ * and the box that switches it are one thing. It is read from the same table the canvas draws from.
+ */
+export function lookOf(role: Role): { css: string; border: "solid" | "dashed" | "dotted"; opacity: number } {
+  const l = STYLE[role];
+  const border = l.style === LineStyle.Solid ? "solid" : l.style === LineStyle.Dotted || l.style === LineStyle.SparseDotted ? "dotted" : "dashed";
+  return { css: `var(--${l.color})`, border, opacity: l.alpha ?? 1 };
+}
 const VISIBLE_BARS = 120; // a new chart shows the latest bars, not all of them: a few hundred candles side by side are too thin to read
+const RIGHT_PAD = 14; // and leaves this many bars of room on the right, where the lines' labels sit: they never lie over the latest candles
 
 /** What a test or a caller can reach of the chart (the library's own handle). */
 export interface ChartHandle {
@@ -105,7 +119,7 @@ export function PriceChart({ data, on, decisions = [], onHover, onReady }: { dat
     if (change.kind === "reset") {
       c.candles.setData(next.bars.map(asSeries));
       const n = next.bars.length;
-      if (n > 0) c.chart.timeScale().setVisibleLogicalRange({ from: Math.max(0, n - VISIBLE_BARS), to: n + 4 });
+      if (n > 0) c.chart.timeScale().setVisibleLogicalRange({ from: Math.max(0, n - VISIBLE_BARS), to: n + RIGHT_PAD });
     } else {
       for (const b of change.bars) c.candles.update(asSeries(b));
     }
@@ -132,7 +146,7 @@ export function PriceChart({ data, on, decisions = [], onHover, onReady }: { dat
       const have = c.lines.get(key);
       if (have?.sig === sig) continue; // the line is where it was: left alone
       if (have) c.candles.removePriceLine(have.line);
-      c.lines.set(key, { sig, line: c.candles.createPriceLine({ price: o.price, color: c.colors[look.color], lineWidth: width, lineStyle: look.style, axisLabelVisible: true, title: o.title }) });
+      c.lines.set(key, { sig, line: c.candles.createPriceLine({ price: o.price, color: withAlpha(c.colors[look.color], look.alpha ?? 1), axisLabelColor: c.colors[look.color], lineWidth: width, lineStyle: look.style, axisLabelVisible: true, title: o.title }) });
     }
   }, [data, on, decisions]);
 

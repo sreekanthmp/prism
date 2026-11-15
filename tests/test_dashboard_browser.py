@@ -14,7 +14,7 @@ import re
 from pathlib import Path
 
 import pytest
-from browser_support import BROWSER, SIZES, browser, free_port, frozen, goto, keep, page, run_server, served  # noqa: F401
+from browser_support import BROWSER, SIZES, WORD, browser, free_port, frozen, goto, keep, page, run_server, served  # noqa: F401
 from dashboard_harness import base_engine
 from dashboard_states import STATES
 
@@ -103,7 +103,7 @@ def test_every_state_on_every_tab_is_within_the_screen_readable_and_free_of_erro
             assert m["scrollW"] <= m["vw"], f"{where}: {m['scrollW']} px wide on a {m['vw']} px screen"
             if tab == "overview":
                 assert m["scrollH"] <= m["vh"] and m["bottom"] <= m["vh"], f"{where}: needs {max(m['scrollH'], m['bottom'])} px of {m['vh']}"
-                assert m["action"] == action, f"{where}: shows {m['action']!r}, not {action!r}"
+                assert m["action"] == WORD.get(action, action), f"{where}: shows {m['action']!r}, not {WORD.get(action, action)!r}"
                 every = m["overviewStrategies"]  # the live rows and the folded list together
                 assert len(every) == len(set(every)) and len(every) in (0, 10), f"{where}: the monitor lists {len(every)} strategies, with duplicates: {every}"
             if tab == "analysis":
@@ -174,7 +174,7 @@ def test_wait_no_trade_and_buy_are_told_apart_by_the_word_and_by_the_colour(page
         open_dashboard(page, served["url"], "overview", 1366, 768)
         seen[state] = page.js("""(() => { const d = document.getElementById('decision'), t = d.querySelector('.dtxt'), cs = getComputedStyle(d);
             return {word: t.textContent.trim(), ink: getComputedStyle(t).color, border: cs.borderTopColor, fill: cs.backgroundColor, cls: d.className}; })()""")
-    assert [seen[k]["word"] for k in ("buy_ce", "buy_pe", "wait", "no_trade")] == ["BUY CE", "BUY PE", "WAIT", "NO TRADE"]
+    assert [seen[k]["word"] for k in ("buy_ce", "buy_pe", "wait", "no_trade")] == ["CE SETUP", "PE SETUP", "WAIT", "NO TRADE"]
     for a in ("wait", "no_trade"):  # WAIT is amber and NO TRADE is neutral grey: in the word, the lettering, the frame and the fill
         for b in ("buy_ce", "buy_pe"):
             assert (seen[a]["ink"], seen[a]["border"]) != (seen[b]["ink"], seen[b]["border"]), (a, b)

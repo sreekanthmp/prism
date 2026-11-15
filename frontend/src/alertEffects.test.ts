@@ -51,7 +51,7 @@ class FakeNote {
   }
 }
 
-const event = (level: AlertEvent["level"]): AlertEvent => ({ level, key: "ready:x", title: "BUY CE ready: Trend Pullback", text: "setup x: look now" });
+const event = (level: AlertEvent["level"]): AlertEvent => ({ level, key: "ready:x", title: "CE setup ready: Trend Pullback", text: "setup x: look now" });
 /** A fresh copy of the module: the sound device is made on first use and kept, so each test starts without one. */
 const load = async () => {
   vi.resetModules();
@@ -145,7 +145,7 @@ describe("the popup", () => {
   it("carries the title, the text and a tag, and an urgent one stays until it is dismissed", async () => {
     const { popup } = await load();
     popup(event("act"));
-    expect(FakeNote.made).toEqual([{ title: "BUY CE ready: Trend Pullback", options: { body: "setup x: look now", tag: "ready:x", requireInteraction: true } }]);
+    expect(FakeNote.made).toEqual([{ title: "CE setup ready: Trend Pullback", options: { body: "setup x: look now", tag: "ready:x", requireInteraction: true } }]);
   });
   it("a warning does not stay on the screen", async () => {
     const { popup } = await load();

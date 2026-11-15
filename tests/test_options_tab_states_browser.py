@@ -13,7 +13,7 @@ import json
 from dataclasses import replace
 
 import pytest
-from browser_support import BROWSER, browser, free_port, goto, page, run_server  # noqa: F401
+from browser_support import BROWSER, WORD, browser, free_port, goto, page, run_server  # noqa: F401
 from test_options_integration import KIND, NAMES, NOW, SIDES, flow, live_engine, mutate
 
 from app.main import create_app
@@ -63,7 +63,7 @@ def test_the_options_tab_shows_the_side_the_originating_strategy_the_setup_and_a
     got = rendered(page, world, md, payload)
     d, kind = payload["decision"], KIND[side]
     sel = md.options_view(payload, NOW)["selection"]
-    assert d["action"] in got["head"] and f"Option side {kind}" in got["head"]
+    assert WORD.get(d["action"], d["action"]) in got["head"] and f"Option side {kind}" in got["head"]
     assert f"From {d['strategy_name']}" in got["head"] and f"setup {d['setup_id']}" in got["head"]  # who made the decision, and which setup
     chosen = sel["contract"]
     assert "Selected contract" in got["sel"] and f"{kind} {chosen['strike']:g}" in got["sel"] and chosen["symbol"] in got["sel"]
@@ -99,8 +99,8 @@ def test_wait_and_no_trade_are_plainly_informational_on_the_options_tab(page, wo
     got = rendered(page, world, md, payload)
     assert payload["decision"]["action"] == action and action in got["head"] and "Option side none" in got["head"] and "From " not in got["head"]
     if payload["decision"]["strategy_name"]:  # a WAIT about a setup (confirmed but not actionable) names it as a setup in view, never as the source of a contract
-        assert "Setup in view (not a BUY, so no contract): Trend Pullback" in got["head"] and f"setup {payload['decision']['setup_id']}" in got["head"]
-    assert "No contract selected" in got["sel"] and "informational: only a BUY CE / BUY PE decision selects a contract" in got["sel"]
+        assert "Setup in view (not ready, so no contract): Trend Pullback" in got["head"] and f"setup {payload['decision']['setup_id']}" in got["head"]
+    assert "No contract selected" in got["sel"] and "informational: only a ready setup (CE SETUP / PE SETUP) selects a contract" in got["sel"]
     assert f"Phase 3 says {action}" in got["sel"] and "The table below is for information only" in got["sel"] and "Selected contract" not in got["sel"] and got["big"] is None
     assert got["rows"] == 28 and got["selected"] == 0  # both sides are listed to read, none is picked
     assert page.errors == []

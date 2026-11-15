@@ -1,5 +1,6 @@
 import { age, fmtT, n1, n2 } from "./format";
 import { contractOffer, liveSetup, stageWord, zone } from "./overviewModel";
+import { actionSaid, plain } from "./labels";
 import type { Plan, Setup, Snapshot, Trading } from "./types";
 import type { TabId } from "./components/Tabs";
 
@@ -90,7 +91,7 @@ function setupChecks(s: Snapshot, t: Trading, x: Setup | null): Check[] {
   const call = x?.direction === "CE" ? "call" : "put";
   const out: Check[] = [];
 
-  out.push(x ? mk("setup", g, "A setup is live", "pass", `${x.strategy_name} ${x.direction}: ${stageWord(x.stage, false)}`) : mk("setup", g, "A setup is live", "fail", `no live setup: ${t.decision.headline}`));
+  out.push(x ? mk("setup", g, "A setup is live", "pass", `${x.strategy_name} ${x.direction}: ${stageWord(x.stage, false)}`) : mk("setup", g, "A setup is live", "fail", `no live setup: ${plain(t.decision.headline)}`));
 
   // the 1H and 15M must not run against the side (only a counter-trend permission lifts it)
   const tl = "The 1H and 15M do not run against the side";
@@ -145,18 +146,18 @@ function setupChecks(s: Snapshot, t: Trading, x: Setup | null): Check[] {
     );
   }
 
-  const dl = "Prism's decision is a BUY for this setup";
+  const dl = "Prism says this setup is ready";
   const action = t.decision.action;
-  if (!x) out.push(mk("decision", g, dl, "fail", t.decision.headline));
-  else if (action === `BUY ${x.direction}` && t.decision.setup_id === x.id) out.push(mk("decision", g, dl, "pass", `Prism says ${action}`));
-  else out.push(mk("decision", g, dl, "fail", `Prism says ${action}: ${t.decision.headline}`));
+  if (!x) out.push(mk("decision", g, dl, "fail", plain(t.decision.headline)));
+  else if (action === `BUY ${x.direction}` && t.decision.setup_id === x.id) out.push(mk("decision", g, dl, "pass", `Prism says ${actionSaid(action)}`));
+  else out.push(mk("decision", g, dl, "fail", `Prism says ${actionSaid(action)}: ${plain(t.decision.headline)}`));
   return out;
 }
 
 // -- the option --------------------------------------------------------------------------------------------------------------------------------------------
 function contract(s: Snapshot, t: Trading): Check {
   const label = "A suitable option contract is offered";
-  if (!/^BUY (CE|PE)$/.test(t.decision.action)) return mk("contract", "option", label, "na", "checked once Prism says BUY CE or BUY PE", "options");
+  if (!/^BUY (CE|PE)$/.test(t.decision.action)) return mk("contract", "option", label, "na", "checked once a setup is ready", "options");
   const o = s.options;
   if (!o || !o.available) return mk("contract", "option", label, "unknown", "no option quotes yet", "options");
   const offer = contractOffer(t, o);

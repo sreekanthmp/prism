@@ -5,6 +5,7 @@ import { cls } from "../overviewModel";
 import type { JournalAnswer, JournalRow, SetupEvent, Snapshot } from "../types";
 import { Sec } from "./Analysis";
 import type { OpenState } from "./AnalysisStrategies";
+import { actionWord, plain } from "../labels";
 import { ExplainBlock } from "./Decision";
 
 const status = (s: string) => <span className={`st st-${s}`}>{s.toLowerCase()}</span>;
@@ -15,7 +16,7 @@ function DecisionRow({ x }: { x: JournalRow }) {
     <tr>
       <td>{fmtT(x.time)}</td>
       <td className="l">
-        <b className={actionClass(x.action)}>{x.action || "–"}</b> <span className="mut">{x.reason || ""}</span>
+        <b className={actionClass(x.action)}>{actionWord(x.action)}</b> <span className="mut">{x.reason || ""}</span>
       </td>
       <td>{n2(x.price)}</td>
       <td className={`l ${cls(x.direction)}`}>
@@ -24,7 +25,7 @@ function DecisionRow({ x }: { x: JournalRow }) {
       </td>
       <td className="l">{x.strategy_name || "–"}</td>
       <td className="wrap">
-        <b>{x.headline || ""}</b>
+        <b>{plain(x.headline || "")}</b>
         {x.options ? (
           <>
             {" "}
@@ -213,7 +214,7 @@ export function JournalTab({ snapshot, journal, error, onRefresh, os }: { snapsh
         <Sec k="j-explain" title="Decision explanation (now)" hint="the plain-words explanation of the current decision" os={os}>
           <ExplainBlock e={t.explain} />
           <div>
-            <b>{t.decision.headline}</b>
+            <b>{plain(t.decision.headline)}</b>
           </div>
           {t.decision.reasons.map((q, i) => (
             <div key={"r" + i} className="why up" style={{ marginLeft: 12 }}>

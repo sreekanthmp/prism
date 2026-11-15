@@ -155,16 +155,16 @@ def test_a_setup_that_becomes_ready_and_then_ends_is_told_by_the_line_the_count_
     out = both(page, world["url"], current, script, mode=mode, permission="granted")
     seen = out["new"]
     assert seen["baseline"]["line"] is None and seen["baseline"]["tones"] == [] and seen["baseline"]["count"] == "0"
-    assert seen["ready"]["line"]["cls"] == "alerts act" and seen["ready"]["line"]["summary"] == "🔔 1 alert: BUY CE ready: Trend Pullback ▾ details" and seen["ready"]["line"]["clear"]
+    assert seen["ready"]["line"]["cls"] == "alerts act" and seen["ready"]["line"]["summary"] == "🔔 1 alert: CE setup ready: Trend Pullback ▾ details" and seen["ready"]["line"]["clear"]
     assert "You decide and place any order yourself." in seen["ready"]["line"]["rows"][0]
     assert seen["back"]["line"] is not None and seen["back"]["count"] == "0"  # (the line stays ten minutes; the count is what the reader has not seen)
-    assert seen["ended"]["line"]["summary"] == "🔔 2 alerts: BUY CE ready: Trend Pullback (+1 more) ▾ details" and any("it is now invalidated" in r for r in seen["ended"]["line"]["rows"])  # (the ready one leads: green outranks a warning)
+    assert seen["ended"]["line"]["summary"] == "🔔 2 alerts: CE setup ready: Trend Pullback (+1 more) ▾ details" and any("it is now invalidated" in r for r in seen["ended"]["line"]["rows"])  # (the ready one leads: green outranks a warning)
     assert seen["cleared"]["line"] is None and seen["cleared"]["count"] == "0"
     sound = {"sound": ACT + WARN, "off": [], "sound + popup": ACT + WARN}[mode]
     assert seen["cleared"]["tones"] == sound, mode
     notes = [json.loads(n) for n in seen["cleared"]["notes"]]
     if mode == "sound + popup":
-        assert [(n["title"], n["sticky"]) for n in notes] == [("BUY CE ready: Trend Pullback", True), ("BUY CE no longer ready: Trend Pullback", False)]
+        assert [(n["title"], n["sticky"]) for n in notes] == [("CE setup ready: Trend Pullback", True), ("CE setup no longer ready: Trend Pullback", False)]
     else:
         assert notes == []
     assert page.errors == []

@@ -2,6 +2,7 @@ import { Fragment } from "react";
 import { fmtT, n2 } from "../format";
 import { AGE, contractOffer, flagIcon, FRESH_CLS, num0, quoteAges, ruledOut, type Offer } from "../optionsModel";
 import type { OptionContract, OptionFlag, Options as OptionsData, OptionsDecision, Snapshot } from "../types";
+import { actionWord, plain } from "../labels";
 import { Kv } from "./OverviewPanels";
 
 const SMALL = { textTransform: "none", letterSpacing: 0 } as const;
@@ -48,7 +49,7 @@ function Origin({ d, stale }: { d: OptionsDecision; stale: boolean }) {
   const also = d.also ?? [];
   return (
     <div className="origin">
-      {stale ? "Last chosen for" : "Chosen for"} <b>{d.action || "–"}</b> from <b>{d.strategy_name || "–"}</b>
+      {stale ? "Last chosen for" : "Chosen for"} <b>{actionWord(d.action)}</b> from <b>{d.strategy_name || "–"}</b>
       {d.strategy ? (
         <>
           {" "}
@@ -245,13 +246,13 @@ function NoContract({ o, offer, d }: { o: OptionsData; offer: Offer; d: OptionsD
       <h3>
         No contract selected{" "}
         <span className="mut" style={SMALL}>
-          {offer.side ? "" : "informational: only a BUY CE / BUY PE decision selects a contract"}
+          {offer.side ? "" : "informational: only a ready setup (CE SETUP / PE SETUP) selects a contract"}
         </span>
       </h3>
       {offer.conflict ? (
         <div className="warnbox">
-          ⚠ The options data offers a contract, but the final decision is <b>{offer.final || "not available"}</b>
-          {offer.final && !offer.agree ? ` (the options payload says ${d.action || "nothing"})` : ""}: no contract is shown as selected.
+          ⚠ The options data offers a contract, but the final decision is <b>{offer.final ? actionWord(offer.final) : "not available"}</b>
+          {offer.final && !offer.agree ? ` (the options payload says ${d.action ? actionWord(d.action) : "nothing"})` : ""}: no contract is shown as selected.
         </div>
       ) : null}
       <div>
@@ -259,8 +260,8 @@ function NoContract({ o, offer, d }: { o: OptionsData; offer: Offer; d: OptionsD
       </div>
       {offer.side ? null : (
         <div className="mut">
-          Final decision: <b>{offer.final || d.action || "not available"}</b>
-          {d.headline ? " — " + d.headline : ""}. Everything below is for information only: nothing in it is selected, and none of it is actionable.
+          Final decision: <b>{offer.final || d.action ? actionWord(offer.final || d.action) : "not available"}</b>
+          {d.headline ? " — " + plain(d.headline) : ""}. Everything below is for information only: nothing in it is selected, and none of it is actionable.
         </div>
       )}
       {offer.side && offer.agree ? <RuledOut o={o} side={offer.side} open /> : null}
@@ -288,12 +289,12 @@ function Head({ o, offer, d }: { o: OptionsData; offer: Offer; d: OptionsDecisio
         </span>
       </span>
       <span>
-        Phase 3 decision <b>{d.action || "–"}</b>
+        Phase 3 decision <b>{actionWord(d.action)}</b>
       </span>
       <span>
         Option side <b>{offer.side && offer.agree ? offer.side : "none"}</b>
       </span>
-      <span className="mut">{d.headline || ""}</span>
+      <span className="mut">{plain(d.headline || "")}</span>
       {d.strategy_name ? (
         buy ? (
           <span>
@@ -302,7 +303,7 @@ function Head({ o, offer, d }: { o: OptionsData; offer: Offer; d: OptionsDecisio
           </span>
         ) : (
           <span className="mut">
-            Setup in view (not a BUY, so no contract): <b>{d.strategy_name}</b>
+            Setup in view (not ready, so no contract): <b>{d.strategy_name}</b>
             {setup}
           </span>
         )

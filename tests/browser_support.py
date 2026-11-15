@@ -12,6 +12,7 @@ measured state."""
 
 import json
 import os
+import re
 import shutil
 import socket
 import subprocess
@@ -27,6 +28,16 @@ from dashboard_harness import base_engine  # noqa: E402
 from websockets.sync.client import connect  # noqa: E402
 
 from app.main import create_app  # noqa: E402
+
+# How the page SAYS the engine's two BUY values. The values (BUY CE / BUY PE) are unchanged in the engine, the journal and the tools; the words on the screen are the dashboard's own
+# (frontend/src/labels.ts): a tab that is asked what the page says uses these, so there is one definition on each side.
+WORD = {"BUY CE": "CE SETUP", "BUY PE": "PE SETUP"}
+
+
+def plain(text):
+    """A sentence of the engine as the page says it: "BUY CE: Trend Pullback setup confirmed" is "CE setup ready: Trend Pullback setup confirmed"."""
+    return re.sub(r"\bBUY (CE|PE)\b", r"\1 setup ready", text)
+
 
 CANDIDATES = [
     r"C:\Program Files\Google\Chrome\Application\chrome.exe", r"C:\Program Files (x86)\Google\Chrome\Application\chrome.exe", r"C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe",

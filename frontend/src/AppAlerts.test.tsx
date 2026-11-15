@@ -39,13 +39,13 @@ describe("being told when something needs you", () => {
     expect(fx.beep).not.toHaveBeenCalled(); // (the first snapshot is a baseline)
     send(base);
     expect(screen.getByTestId("alert-line").className).toBe("alerts act");
-    expect(lineText()).toBe("🔔 1 alert: BUY CE ready: Trend Pullback ▾ details");
+    expect(lineText()).toBe("🔔 1 alert: CE setup ready: Trend Pullback ▾ details");
     expect(fx.beep).toHaveBeenCalledTimes(1);
     expect(fx.beep).toHaveBeenCalledWith("act");
     expect(document.title).toBe("(1) Prism");
     act(() => { document.body.click(); });
     expect(document.title).toBe("Prism");
-    expect(lineText()).toBe("🔔 1 alert: BUY CE ready: Trend Pullback ▾ details");
+    expect(lineText()).toBe("🔔 1 alert: CE setup ready: Trend Pullback ▾ details");
     expect(screen.getByTestId("alert-line").textContent).toContain("You decide and place any order yourself.");
   });
 
@@ -105,7 +105,7 @@ describe("being told when something needs you", () => {
     send(staged("CONFIRMED"));
     send(base);
     expect(fx.beep).not.toHaveBeenCalled();
-    expect(lineText()).toContain("BUY CE ready");
+    expect(lineText()).toContain("CE setup ready");
     expect(document.title).toBe("(1) Prism");
   });
 
@@ -119,7 +119,7 @@ describe("being told when something needs you", () => {
     advance(RECONNECT_MS);
     send(base); // the setup became ready while the page could not see
     expect(vi.mocked(fx.beep).mock.calls.map((c) => c[0])).toEqual(["warn", "act"]);
-    expect(lineText()).toContain("BUY CE ready");
+    expect(lineText()).toContain("CE setup ready");
   });
 
   it("a page that has lost its link says nothing about setups or the market, though the alerts are counted", () => {

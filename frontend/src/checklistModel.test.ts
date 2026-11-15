@@ -28,7 +28,7 @@ describe("the real BUY CE world", () => {
       ["clear", "setup", "pass", "no blocker"],
       ["cautions", "setup", "warn", "15M RSI 73.9: momentum is already stretched in this direction"],
       ["levels", "setup", "pass", "invalidation 24270.48 (10.5 pts of risk) · target 1 24308.00 (27.0 pts, 2.6R) · index points, not option premium"],
-      ["decision", "setup", "pass", "Prism says BUY CE"],
+      ["decision", "setup", "pass", "Prism says CE setup ready"],
       ["contract", "option", "pass", "CE 24200 · ITM · spread 0.24% · 4 day(s) to expiry"],
     ]);
   });
@@ -156,8 +156,8 @@ describe("with no live setup", () => {
     expect(row(none, "session")[0]).toBe("pass");
     expect(row(none, "data")[0]).toBe("pass");
   });
-  it("asks about the option only once Prism says BUY", () => {
-    expect(all(none).find((c) => c.id === "contract")).toEqual({ id: "contract", group: "option", label: "A suitable option contract is offered", status: "na", text: "checked once Prism says BUY CE or BUY PE", goto: "options" });
+  it("asks about the option only once a setup is ready", () => {
+    expect(all(none).find((c) => c.id === "contract")).toEqual({ id: "contract", group: "option", label: "A suitable option contract is offered", status: "na", text: "checked once a setup is ready", goto: "options" });
   });
 });
 
@@ -238,15 +238,15 @@ describe("the invalidation and a target are known", () => {
   });
 });
 
-describe("Prism's decision is a BUY for this setup", () => {
+describe("Prism says this setup is ready", () => {
   it("is not met when Prism says WAIT or NO TRADE, and says why", () => {
     expect(row(variant((s) => { T(s).decision.action = "WAIT"; T(s).decision.headline = "WAIT: Trend Pullback (CE) is confirmed but blocked"; }), "decision")).toEqual(["fail", "Prism says WAIT: WAIT: Trend Pullback (CE) is confirmed but blocked"]);
   });
   it("is not met when the BUY is for the other side", () => {
-    expect(row(variant((s) => { T(s).decision.action = "BUY PE"; }), "decision")).toEqual(["fail", "Prism says BUY PE: BUY CE: Trend Pullback setup confirmed"]);
+    expect(row(variant((s) => { T(s).decision.action = "BUY PE"; }), "decision")).toEqual(["fail", "Prism says PE setup ready: CE setup ready: Trend Pullback setup confirmed"]);
   });
   it("is not met when the BUY names a setup the page does not hold: the setup read is the explained one, not the one bought", () => {
-    expect(row(variant((s) => { T(s).decision.setup_id = "gone:bull:1"; }), "decision")).toEqual(["fail", "Prism says BUY CE: BUY CE: Trend Pullback setup confirmed"]);
+    expect(row(variant((s) => { T(s).decision.setup_id = "gone:bull:1"; }), "decision")).toEqual(["fail", "Prism says CE setup ready: CE setup ready: Trend Pullback setup confirmed"]);
   });
   it("is met for the setup the decision names, whichever setup comes first in the list", () => {
     const s = variant((x) => {
@@ -254,7 +254,7 @@ describe("Prism's decision is a BUY for this setup", () => {
       T(x).setups = [X(x), second];
       T(x).decision.setup_id = second.id;
     });
-    expect(row(s, "decision")).toEqual(["pass", "Prism says BUY CE"]);
+    expect(row(s, "decision")).toEqual(["pass", "Prism says CE setup ready"]);
     expect(row(s, "setup")).toEqual(["pass", "EMA Trend Continuation CE: READY: in the entry area"]); // (the checks read the setup the decision is about)
   });
 });

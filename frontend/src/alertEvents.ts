@@ -34,7 +34,7 @@ export const ALERT_SHOW_S = 600;
 export const LINE_MAX = 5;
 export const LOG_MAX = 20;
 
-export const sideWord = (d: string): string => (d === "CE" ? "BUY CE" : d === "PE" ? "BUY PE" : String(d));
+export const sideWord = (d: string): string => (d === "CE" ? "CE setup" : d === "PE" ? "PE setup" : String(d));
 const spell = (s: unknown): string => String(s).replace(/_/g, " ");
 
 function setupsById(s: Snapshot | null | undefined): Map<string, Setup> {

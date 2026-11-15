@@ -46,7 +46,7 @@ const HowTo = () => (
         <b>1. Check the data.</b> The top bar must be green: <b className="up">MARKET OPEN</b>, <b className="up">FEED CONNECTED</b>, <b className="up">DATA TRUSTED</b>. If anything is red, grey or <b className="down">STALE</b>, do not trade from this screen.
       </div>
       <div className="hstep">
-        <b>2. Read the decision.</b> <b className="up">BUY CE</b> (a call) or <b className="down">BUY PE</b> (a put) means a setup passed Prism's rules. <b className="flat">WAIT</b> or <b className="neu">NO TRADE</b> means stay out; the line beside it says why.
+        <b>2. Read the decision.</b> <b className="up">CE SETUP</b> or <b className="down">PE SETUP</b> means the rules were met: not a recommendation, and no measured edge. <b className="flat">WAIT</b> or <b className="neu">NO TRADE</b> means stay out; the line beside it says why.
       </div>
       <div className="hstep">
         <b>3. Check "Entry".</b> It must say "eligible". "Not eligible" means wait.
@@ -58,7 +58,7 @@ const HowTo = () => (
         <b>5. Know your exit.</b> <b>Current setup</b> shows the trigger, the entry zone and the invalidation. If price closes past the invalidation, the idea is wrong. Choose your own stop and size.
       </div>
       <div className="hstep">
-        <b>6. Pick the option.</b> For a BUY only: open the <b>Options</b> tab. The contract should be <b className="up">FRESH</b> with a tight spread.
+        <b>6. Pick the option.</b> For a ready setup only: open the <b>Options</b> tab. The contract should be <b className="up">FRESH</b> with a tight spread.
       </div>
       <div className="hstep">
         <b>7. Use the checklist.</b> The <b>Checklist</b> button beside "Explain this decision" gathers all this, plus five things only you can check.

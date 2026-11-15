@@ -3,6 +3,7 @@ import { describe, expect, it, vi } from "vitest";
 import { App } from "../App";
 import { base, EVIL, FakeSocket, fakeFactory, variant } from "../test/helpers";
 import type { Setup, Snapshot } from "../types";
+import { NOTE, NOTE_WHY } from "../labels";
 import { Overview } from "./Overview";
 import { TABS } from "./Tabs";
 
@@ -42,12 +43,12 @@ describe("before there is a decision", () => {
 });
 
 describe("the decision", () => {
-  it("is BUY CE in green, with who made it, and says the entry is eligible", () => {
+  it("is CE SETUP in green, with who made it, and says the entry is eligible", () => {
     show(base);
     expect(el("decision").className).toBe("decision buy-ce");
-    expect(el("decision").querySelector(".dtxt")?.textContent).toBe("BUY CE");
+    expect(el("decision").querySelector(".dtxt")?.textContent).toBe("CE SETUP");
     expect(el("decision").querySelector(".dsub")?.textContent).toBe("morning · entries allowed");
-    expect(el("decision").querySelector(".dhead")?.textContent).toBe("BUY CE: Trend Pullback setup confirmed");
+    expect(el("decision").querySelector(".dhead")?.textContent).toBe("CE setup ready: Trend Pullback setup confirmed");
     expect(el("decision").querySelector(".dblock")).toBeNull(); // nothing blocks entry
     const did = el("decision").querySelector(".did")!;
     expect(did.textContent).toBe("StrategyTrend PullbackStrategy IDtrend_pullbackSetup IDtrend_pullback:bull:1793940000Agreesnone");
@@ -56,10 +57,10 @@ describe("the decision", () => {
     expect(el("decision").querySelector(".go > span b")?.className).toBe("up");
   });
 
-  it.each([["BUY PE", "buy-pe"], ["WAIT", "wait"], ["NO TRADE", "no-trade"], ["SOMETHING NEW", "no-trade"]])("%s has the colour %s", (action, klass) => {
+  it.each([["BUY PE", "buy-pe", "PE SETUP"], ["WAIT", "wait", "WAIT"], ["NO TRADE", "no-trade", "NO TRADE"], ["SOMETHING NEW", "no-trade", "SOMETHING NEW"]])("%s has the colour %s and is said as %s", (action, klass, word) => {
     show(variant((s) => { t(s).decision.action = action; }));
     expect(el("decision").className).toBe(`decision ${klass}`);
-    expect(el("decision").querySelector(".dtxt")?.textContent).toBe(action);
+    expect(el("decision").querySelector(".dtxt")?.textContent).toBe(word);
   });
 
   it("says 'not eligible' in amber when the setup cannot be entered", () => {
@@ -100,9 +101,9 @@ describe("the decision", () => {
     show(base, { stale: true });
     expect(el("decision").className).toBe("decision stale");
     expect(el("decision").querySelector(".dtxt")?.textContent).toBe("STALE");
-    expect(el("decision").querySelector(".dsub")?.textContent).toBe("last decision: BUY CE");
+    expect(el("decision").querySelector(".dsub")?.textContent).toBe("last decision: CE SETUP");
     expect(el("decision").querySelector(".dhead")?.textContent).toBe("STALE since 10:55 — NOT ACTIONABLE");
-    expect(el("decision").querySelector(".dblock")?.textContent).toBe("Last known, not current: BUY CE: Trend Pullback setup confirmed");
+    expect(el("decision").querySelector(".dblock")?.textContent).toBe("Last known, not current: CE setup ready: Trend Pullback setup confirmed");
     expect(el("decision").querySelector(".go > span")?.textContent).toBe("Entry not eligible: STALE");
     expect(el("decision").querySelector(".popbody .warnbox")?.textContent).toBe("The last snapshot (made 10:55:06 IST): not a current decision.");
     expect(document.body.textContent).not.toContain("eligible (actionable now)");
@@ -518,6 +519,43 @@ describe("what a server says is only ever text", () => {
   });
 });
 
+describe("the note beside a ready setup", () => {
+  const note = () => document.querySelector("[data-testid=decision-note]") as HTMLElement | null;
+
+  it("says the rules were met and nothing more, and what that stands on when the mouse is on it", () => {
+    show(base);
+    expect(note()?.textContent).toBe(NOTE);
+    expect(note()?.textContent).toBe("rules met · not a recommendation · no measured edge");
+    expect(note()?.title).toBe(NOTE_WHY);
+    expect(note()?.title).toContain("no better than random entries");
+  });
+
+  it("sits beside the headline, not in it: the headline is the engine's words, said plainly", () => {
+    show(base);
+    const line = note()!.parentElement!;
+    expect(line.className).toBe("dline");
+    expect([...line.children].map((c) => c.className)).toEqual(["dhead", "dnote"]);
+    expect(line.querySelector(".dhead")?.textContent).toBe("CE setup ready: Trend Pullback setup confirmed");
+  });
+
+  it("is there for a put setup too", () => {
+    show(variant((s) => { t(s).decision.action = "BUY PE"; t(s).decision.headline = "BUY PE: Trend Pullback setup confirmed"; }));
+    expect(el("decision").querySelector(".dtxt")?.textContent).toBe("PE SETUP");
+    expect(note()?.textContent).toBe(NOTE);
+  });
+
+  it.each(["WAIT", "NO TRADE", "SOMETHING NEW"])("is not there for %s: nothing was met", (action) => {
+    show(variant((s) => { t(s).decision.action = action; t(s).decision.headline = `${action}: why`; }));
+    expect(note()).toBeNull();
+  });
+
+  it("is not there on a page that lost its link: the last decision is history, and says no more than it did", () => {
+    show(base, { stale: true });
+    expect(note()).toBeNull();
+    expect(el("decision").querySelector(".dtxt")?.textContent).toBe("STALE");
+  });
+});
+
 describe("the how-to", () => {
   const howto = () => el("howto") as HTMLDetailsElement;
   const steps = () => [...howto().querySelectorAll(".howto > .hstep")].map((d) => d.textContent ?? "");
@@ -537,11 +575,11 @@ describe("the how-to", () => {
     show(base);
     expect(steps()).toEqual([
       "1. Check the data. The top bar must be green: MARKET OPEN, FEED CONNECTED, DATA TRUSTED. If anything is red, grey or STALE, do not trade from this screen.",
-      "2. Read the decision. BUY CE (a call) or BUY PE (a put) means a setup passed Prism's rules. WAIT or NO TRADE means stay out; the line beside it says why.",
+      "2. Read the decision. CE SETUP or PE SETUP means the rules were met: not a recommendation, and no measured edge. WAIT or NO TRADE means stay out; the line beside it says why.",
       '3. Check "Entry". It must say "eligible". "Not eligible" means wait.',
       "4. Check the trend. The 1H and 15M should agree with the trade: up for a call, down for a put.",
       "5. Know your exit. Current setup shows the trigger, the entry zone and the invalidation. If price closes past the invalidation, the idea is wrong. Choose your own stop and size.",
-      "6. Pick the option. For a BUY only: open the Options tab. The contract should be FRESH with a tight spread.",
+      "6. Pick the option. For a ready setup only: open the Options tab. The contract should be FRESH with a tight spread.",
       '7. Use the checklist. The Checklist button beside "Explain this decision" gathers all this, plus five things only you can check.',
     ]); // fmt: skip
     expect(notes()).toEqual([

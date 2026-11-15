@@ -39,7 +39,7 @@ describe("the alerts a snapshot raises", () => {
   it("a setup that becomes ready is logged, sounds once, and is counted in the title", () => {
     const h = mount();
     tell(h, ...ready());
-    expect(h.result.current.state.log.map((x) => [x.level, x.key, x.title, x.t])).toEqual([["act", "ready:" + setup.id, "BUY CE ready: Trend Pullback", base.server_time]]);
+    expect(h.result.current.state.log.map((x) => [x.level, x.key, x.title, x.t])).toEqual([["act", "ready:" + setup.id, "CE setup ready: Trend Pullback", base.server_time]]);
     expect(fx.beep).toHaveBeenCalledTimes(1);
     expect(fx.beep).toHaveBeenCalledWith("act");
     expect(fx.popup).not.toHaveBeenCalled(); // (the default is a sound only)
@@ -49,7 +49,7 @@ describe("the alerts a snapshot raises", () => {
   it("is told of every snapshot, not only the last of those that arrived together", () => {
     const h = mount();
     tell(h, staged("CONFIRMED"), base, staged("INVALIDATED")); // ready and ended between two redraws: both are news
-    expect(h.result.current.state.log.map((x) => x.title)).toEqual(["BUY CE no longer ready: Trend Pullback", "BUY CE ready: Trend Pullback"]);
+    expect(h.result.current.state.log.map((x) => x.title)).toEqual(["CE setup no longer ready: Trend Pullback", "CE setup ready: Trend Pullback"]);
     expect(fx.beep).toHaveBeenCalledTimes(2);
     expect(vi.mocked(fx.beep).mock.calls.map((c) => c[0])).toEqual(["act", "warn"]);
   });
@@ -62,7 +62,7 @@ describe("the alerts a snapshot raises", () => {
     const second = variant((s) => { s.trading!.setups.push(structuredClone(other)); });
     tell(h, first, second);
     expect(fx.beep).toHaveBeenCalledTimes(1);
-    expect(vi.mocked(fx.popup).mock.calls.map((c) => c[0].title)).toEqual(["BUY CE ready: Trend Pullback", "BUY CE ready: Breakout and Retest"]);
+    expect(vi.mocked(fx.popup).mock.calls.map((c) => c[0].title)).toEqual(["CE setup ready: Trend Pullback", "CE setup ready: Breakout and Retest"]);
     expect(document.title).toBe("(2) Prism");
   });
 
@@ -113,7 +113,7 @@ describe("the alerts a snapshot raises", () => {
     const h = mount();
     const at = (s: Snapshot, n: number): Snapshot => ({ ...s, server_time: s.server_time + n });
     tell(h, staged("CONFIRMED"), base, at(staged("CONFIRMED"), 5), at(base, 10), at(staged("CONFIRMED"), 15), at(base, 20));
-    expect(h.result.current.state.log.map((x) => x.title)).toEqual(["BUY CE ready: Trend Pullback"]);
+    expect(h.result.current.state.log.map((x) => x.title)).toEqual(["CE setup ready: Trend Pullback"]);
     expect(fx.beep).toHaveBeenCalledTimes(1);
   });
 
@@ -226,6 +226,6 @@ describe("the mode", () => {
     vi.mocked(fx.beep).mockClear();
     tell(h, staged("INVALIDATED"));
     expect(fx.beep).toHaveBeenCalledWith("warn");
-    expect(vi.mocked(fx.popup).mock.calls.map((c) => c[0].title)).toEqual(["BUY CE no longer ready: Trend Pullback"]);
+    expect(vi.mocked(fx.popup).mock.calls.map((c) => c[0].title)).toEqual(["CE setup no longer ready: Trend Pullback"]);
   });
 });

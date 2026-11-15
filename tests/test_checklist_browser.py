@@ -10,7 +10,7 @@ a mocked market (no broker, no database).
 Mocked market only: nothing here has been looked at against a live session."""
 
 import pytest
-from browser_support import BROWSER, browser, free_port, frozen, goto, keep, page, run_server, served  # noqa: F401
+from browser_support import BROWSER, WORD, browser, free_port, frozen, goto, keep, page, run_server, served  # noqa: F401
 from dashboard_harness import base_engine
 from dashboard_states import STATES
 
@@ -105,7 +105,7 @@ def test_it_opens_over_the_page_without_moving_it_and_stays_open_while_the_page_
     open_checklist(page)
     assert page.js("(() => { const r = document.getElementById('tfrow').getBoundingClientRect(); const d = document.getElementById('decision').getBoundingClientRect(); return [r.top, r.height, d.height]; })()") == before  # it floats: nothing moves
     text = " ".join(page.js(f"{POP}.textContent").split())
-    for said in ("Before you trade", "The day and the data", "The setup", "The option", "Yours to check: Prism cannot see these", "12 of 13 met · 1 caution — yours: 0 of 5 ticked", "Prism says BUY CE", "A checklist, not a signal"):
+    for said in ("Before you trade", "The day and the data", "The setup", "The option", "Yours to check: Prism cannot see these", "12 of 13 met · 1 caution — yours: 0 of 5 ticked", "Prism says CE setup ready", "A checklist, not a signal"):
         assert said in text, said
     keep(page, tmp_path, "checklist-open")
     page.pause(2.5)  # two more snapshots arrive
@@ -136,7 +136,7 @@ def test_in_every_pinned_state_each_row_says_what_that_states_own_snapshot_calls
             snap = frozen(md)
             served["app"].state.md = md
             open_overview(page, served["url"])
-            assert page.js("document.querySelector('#decision .dtxt').textContent.trim()") == action, name
+            assert page.js("document.querySelector('#decision .dtxt').textContent.trim()") == WORD.get(action, action), name
             got = page.js(ROWS)
             assert got == expected(snap), (name, {k: (got.get(k), v) for k, v in expected(snap).items() if got.get(k) != v})
             seen.append((name, tuple(got[k] for k in ORDER)))
@@ -169,12 +169,12 @@ def test_what_the_reader_ticks_survives_a_visit_to_another_tab_and_is_for_the_se
     assert page.js(BOXES) == [True, False, True, False, False]  # (still ticked: the page was not reloaded)
     try:
         served["app"].state.md = other  # another setup is live (a put)
-        page.until("document.querySelector('#decision .dtxt').textContent.trim() === 'BUY PE'", timeout=20)
+        page.until("document.querySelector('#decision .dtxt').textContent.trim() === 'PE SETUP'", timeout=20)
         assert page.js(BOXES) == [False] * 5
     finally:
         served["app"].state.md = md0
         md0.on_change()
-    page.until("document.querySelector('#decision .dtxt').textContent.trim() === 'BUY CE'", timeout=20)
+    page.until("document.querySelector('#decision .dtxt').textContent.trim() === 'CE SETUP'", timeout=20)
     assert page.js(BOXES) == [True, False, True, False, False]  # the first setup is live again: its ticks are as they were
     assert page.errors == [], page.errors
 

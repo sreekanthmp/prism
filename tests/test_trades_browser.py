@@ -167,7 +167,7 @@ def test_the_trades_tab_says_what_each_notebook_calls_for(page, world, tmp_path,
         assert want in text, f"{case}: the tab does not say {want!r}: {text[:600]}"
     if case == "three":  # the table: a buy shows what its sold part made, a sell the result, and the three trades are in order
         assert [r[1] for r in got["rows"]] == ["BUY", "BUY", "SELL"] and [r[5] for r in got["rows"]] == ["100", "0", ""] and [r[6] for r in got["rows"]] == ["Rs 1,950", "", "Rs 1,950"]
-        assert got["rows"][0][7] == "BUY CE at 24281.00 · followed Prism: yes: the setup you named" and got["rows"][1][7] == "WAIT at 24262.50 · followed Prism: no" and got["rows"][2][7] == ""
+        assert got["rows"][0][7] == "CE SETUP at 24281.00 · followed Prism: yes: the setup you named" and got["rows"][1][7] == "WAIT at 24262.50 · followed Prism: no" and got["rows"][2][7] == ""
         assert len(got["voids"]) == 3
     if case == "loss":
         assert page.js("document.querySelector('#trades-body .badbox') !== null")

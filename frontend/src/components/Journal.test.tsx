@@ -106,12 +106,12 @@ describe("the decision history", () => {
     expect([...sec("j-decisions").querySelectorAll("th")].map((h) => h.textContent)).toEqual(["Time", "Decision", "NIFTY", "Market", "Strategy", "Why"]);
     const r = rows("j-decisions");
     expect(r).toHaveLength(3);
-    expect(cells(r[0]!).slice(0, 5)).toEqual(["10:55:05", "BUY CE changed", "24285.00", "bullish trend up", "Trend Pullback"]);
+    expect(cells(r[0]!).slice(0, 5)).toEqual(["10:55:05", "CE SETUP changed", "24285.00", "bullish trend up", "Trend Pullback"]);
     expect(cells(r[1]!).slice(0, 2)).toEqual(["10:45:05", "WAIT changed"]);
     expect(cells(r[2]!).slice(0, 2)).toEqual(["10:40:05", "WAIT start"]);
     expect(sec("j-decisions").querySelector("summary .mut")?.textContent).toBe("each change of decision, with the reasons for and against");
   });
-  it("colours the decision: BUY CE green, WAIT amber, and the market by its direction", () => {
+  it("colours the decision: CE SETUP green, WAIT amber, and the market by its direction", () => {
     show(base, journalBase);
     const r = rows("j-decisions");
     expect(r[0]!.querySelector("b")?.className).toBe("up");
@@ -125,7 +125,7 @@ describe("the decision history", () => {
   it("says the headline, the reasons for in green and against in amber, and the permission and the regime facts", () => {
     show(base, journalBase);
     const why = rows("j-decisions")[0]!.children[5]!;
-    expect(why.querySelector("b")?.textContent).toBe("BUY CE: Trend Pullback setup confirmed");
+    expect(why.querySelector("b")?.textContent).toBe("CE setup ready: Trend Pullback setup confirmed");
     expect([...why.querySelectorAll(":scope > .up")].map((d) => d.textContent)).toEqual([
       "+ 1H bullish (ADX 100.0); 15M bullish with HH_HL structure",
       "+ pulled back 36.0 pts (2.7x ATR15) from the 24,308.00 high to 24,272.00, at previous day high 24,270.55",
@@ -232,7 +232,7 @@ describe("the decision as it stands, and the trades", () => {
     show(base, journalBase);
     const t = secText("j-explain");
     expect(t).toContain("In plain words (about the setup this decision refers to)");
-    expect(t).toContain("BUY CE: Trend Pullback setup confirmed");
+    expect(t).toContain("CE setup ready: Trend Pullback setup confirmed");
     expect(t).toContain("+ 1H bullish (ADX 100.0); 15M bullish with HH_HL structure");
     expect(t).toContain("− 15M RSI 73.9: momentum is already stretched in this direction");
     expect(sec("j-explain").querySelector("summary .mut")?.textContent).toBe("the plain-words explanation of the current decision");
@@ -242,7 +242,7 @@ describe("the decision as it stands, and the trades", () => {
   it("has no account when the engine gave none, and no explanation at all with no decision", () => {
     show(variant((s) => { s.trading!.explain = null; }), journalBase);
     expect(sec("j-explain").querySelector(".card")).toBeNull();
-    expect(secText("j-explain")).toContain("BUY CE: Trend Pullback setup confirmed");
+    expect(secText("j-explain")).toContain("CE setup ready: Trend Pullback setup confirmed");
     show(variant((s) => { s.trading = null; }), journalBase);
     expect(sec("j-explain")).toBeNull();
     expect(rows("j-events")).toHaveLength(3); // (the journal's events do not need the decision)

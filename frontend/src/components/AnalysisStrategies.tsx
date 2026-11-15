@@ -1,6 +1,7 @@
 import { Fragment, useEffect, useRef, type ReactNode } from "react";
 import { fmtT, n2 } from "../format";
 import { checkMark, FACT_CLS, FACT_NAME, liveWords, PERMISSION_GROUPS, SIDE_LONG, structureLine } from "../analysisModel";
+import { plain } from "../labels";
 import { atrNote, stageWord, stateWord } from "../overviewModel";
 import type { CounterTrend, RegimeCheck, RegimeFacts, Setup, StrategyMonitor, StrategySide, Trading } from "../types";
 import { PlanBlock } from "./Decision";
@@ -325,7 +326,7 @@ export function StrategyAnalysis({ t, stale, os }: { t: Trading; stale: boolean;
       </div>
       {t.strategies.length ? t.strategies.map((z) => <StrategyDetail key={z.id} z={z} t={t} stale={stale} os={os} />) : <div className="mut">no strategy data</div>}
       <div style={{ marginTop: 6 }}>
-        <b>{d.headline}</b>
+        <b>{plain(d.headline)}</b>
       </div>
       {d.reasons.map((q, i) => (
         <div key={"r" + i} className="why up" style={{ marginLeft: 12 }}>

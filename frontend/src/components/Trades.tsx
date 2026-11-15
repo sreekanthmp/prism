@@ -2,6 +2,7 @@ import { useEffect, useRef } from "react";
 import { fmtT, n2 } from "../format";
 import { rs } from "../tradesModel";
 import type { RiskAnswer, Snapshot, TradeRow, TradesAvailable } from "../types";
+import { actionWord } from "../labels";
 import type { RiskState } from "../useRisk";
 import type { TradesState } from "../useTrades";
 
@@ -57,7 +58,7 @@ function TradeLine({ x, onVoid }: { x: TradeRow; onVoid: (id: string) => void })
       <td className="l">
         {x.prism ? (
           <>
-            {x.prism.action || "–"}
+            {actionWord(x.prism.action)}
             {x.prism.price != null ? (
               <>
                 {" "}

@@ -83,7 +83,7 @@ def test_the_legend_and_the_setup_list_say_what_the_chart_draws(page, served):
     setups = page.js("document.querySelector('[data-testid=chart-setups]').innerText")
     s = md.safe_trading()["setups"][0]
     assert "CE · Trend Pullback" in setups and f"Trigger {s['trigger']:.2f}" in setups and f"Invalidation {s['invalidation']:.2f}" in setups and "the decision's setup" in setups
-    assert "decision: buy ce" in setups.lower()  # (the heading is drawn in capitals)
+    assert "decision: ce setup" in setups.lower()  # (the heading is drawn in capitals)
     assert page.js("document.querySelector('[data-testid=chart-facts]').innerText").startswith("Trend bullish")
 
 
@@ -112,7 +112,7 @@ def test_the_daily_chart_has_no_time_of_day_and_says_why_it_has_no_indicators(pa
 def test_each_box_under_on_the_chart_takes_its_own_colour_off_the_canvas_and_gives_it_back(page, served):
     open_chart(page, served)
     before = page.js(COUNT)
-    for box, key in (("EMA 20", "ema20"), ("EMA 50", "ema50"), ("Setups", "trigger")):
+    for box, key in (("EMA 20", "ema20"), ("EMA 50", "ema50"), ("Setup lines", "trigger")):
         click(page, toggle_box(box))
         page.pause(0.5)
         gone = page.js(COUNT)
@@ -123,7 +123,7 @@ def test_each_box_under_on_the_chart_takes_its_own_colour_off_the_canvas_and_giv
         page.pause(0.5)
         back = page.js(COUNT)
         assert back[key] > 0.8 * before[key], (box, before, back)
-    click(page, toggle_box("Levels"))
+    click(page, toggle_box("Key levels"))
     page.pause(0.5)
     assert page.js(COUNT)["level"] == 0
     assert page.errors == [], page.errors
@@ -253,7 +253,7 @@ def test_the_numbers_under_the_chart_say_what_they_are_on_hover_and_there_is_a_g
     page.js("document.querySelector('[data-testid=chart-guide] > summary').click()")
     page.until("document.querySelector('[data-testid=chart-guide]').open")
     text = " ".join(page.js("document.querySelector('[data-testid=chart-guide]').innerText").split())
-    for said in ("EMA 20", "H and L arrows", "BUY CE", "PDH, PDL, PDC", "trigger", "invalidation", "none of this tells you to buy or sell"):
+    for said in ("EMA 20", "Swings (off to begin with)", "CE setup", "Key levels", "Prev day high, low and close", "Support (a floor", "Resistance (a ceiling", "More levels (off to begin with)", "trigger", "invalidation", "none of this tells you to buy or sell"):
         assert said in text, said
     assert page.js("document.documentElement.scrollWidth") <= page.js("innerWidth")
     keep(page, None, "chart_guide")
@@ -285,3 +285,55 @@ def test_where_the_decision_changed_is_marked_on_the_candles_and_said_when_the_m
     finally:
         served["app"].state.md = md0
         md0.on_change()
+
+
+# -- the simple view, and the boxes as the key ---------------------------------------------------------------------------------------------------------------------
+TICKED = "[...document.querySelectorAll('[role=group][aria-label=\"On the chart\"] input')].map(i => i.checked)"
+
+
+def view_button(label):
+    return f"[...document.querySelectorAll('[role=group][aria-label=View] button')].find(b => b.textContent === '{label}')"
+
+
+def pressed(page, label):
+    return page.js(f"{view_button(label)}.getAttribute('aria-pressed')")
+
+
+def test_it_begins_simple_and_everything_is_one_click_away_and_simple_one_click_back(page, served, tmp_path):
+    settled(served["md"])
+    open_chart(page, served)
+    assert page.js(TICKED) == [True, True, True, False, True, False, True]  # the averages, the key levels, the setup's lines, the decisions: not the other levels, not the swings
+    assert [pressed(page, "Simple"), pressed(page, "Everything")] == ["true", "false"]
+    simple = page.js(FINGERPRINT)
+    assert page.js(COUNT)["level"] > 400  # (the key levels are drawn)
+    keep(page, tmp_path, "chart_simple")
+    click(page, view_button("Everything"))
+    page.pause(0.8)
+    assert page.js(TICKED) == [True] * 7 and [pressed(page, "Simple"), pressed(page, "Everything")] == ["false", "true"]
+    everything = page.js(FINGERPRINT)
+    assert everything != simple, "'Everything' changed nothing on the canvas: no swing arrow and no other level was drawn"
+    keep(page, tmp_path, "chart_everything")
+    click(page, view_button("Simple"))
+    page.pause(0.8)
+    assert page.js(FINGERPRINT) == simple, "'Simple' did not bring the simple picture back"
+    assert [pressed(page, "Simple"), pressed(page, "Everything")] == ["true", "false"]
+    click(page, toggle_box("Swings"))  # one box alone is neither view, and draws the arrows by itself
+    page.pause(0.8)
+    assert page.js(FINGERPRINT) != simple, "the Swings box alone changed nothing on the canvas"
+    assert [pressed(page, "Simple"), pressed(page, "Everything")] == ["false", "false"]
+    assert page.errors == [], page.errors
+
+
+def test_the_boxes_under_the_chart_are_also_its_key_each_with_a_sample_of_its_line(page, served):
+    open_chart(page, served)
+    got = page.js(
+        """(() => { const rgb = (v) => { const p = document.createElement('i'); p.style.color = 'var(' + v + ')'; document.body.appendChild(p); const c = getComputedStyle(p).color; p.remove(); return c; };
+        const look = (label) => [...[...document.querySelectorAll('[role=group][aria-label="On the chart"] label')].find(l => l.textContent.trim() === label).querySelectorAll('.ksw')].map(e => { const s = getComputedStyle(e); return [s.borderTopColor, s.borderTopStyle, s.opacity]; });
+        return {ema20: look('EMA 20'), ema50: look('EMA 50'), key: look('Key levels'), more: look('More levels'), setups: look('Setup lines'), warn: rgb('--warn'), mut: rgb('--mut'), ok: rgb('--ok'), bad: rgb('--bad'), acc: rgb('--acc'), e20: rgb('--ema20'), e50: rgb('--ema50')}; })()"""
+    )
+    assert got["ema20"] == [[got["e20"], "solid", "1"]] and got["ema50"] == [[got["e50"], "solid", "1"]]
+    assert got["key"] == [[got["warn"], "dotted", "1"], [got["mut"], "dotted", "1"], [got["ok"], "dashed", "0.6"], [got["bad"], "dashed", "0.6"]]  # amber dotted, grey dotted, faded green dashed, faded red dashed
+    assert got["more"] == [[got["ok"], "dashed", "0.6"], [got["bad"], "dashed", "0.6"]]
+    assert got["setups"] == [[got["acc"], "dashed", "1"], [got["bad"], "solid", "1"], [got["ok"], "dashed", "1"]]  # the trigger, the invalidation, the target
+    assert page.js("[...document.querySelectorAll('[role=group][aria-label=\"On the chart\"] label')].map(l => l.textContent.trim())") == ["EMA 20", "EMA 50", "Key levels", "More levels", "Setup lines", "Swings", "Decisions"]
+    assert page.errors == [], page.errors

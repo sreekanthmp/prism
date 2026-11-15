@@ -49,7 +49,7 @@ describe("before there is a snapshot, or an analysis", () => {
 describe("the header bar", () => {
   it("says the spot and its age, the decision, the option side, the headline and who made it", () => {
     show(base);
-    expect([...el("opt-head").children].map((c) => c.textContent)).toEqual(["NIFTY spot 24287.00 1 s old", "Phase 3 decision BUY CE", "Option side CE", "BUY CE: Trend Pullback setup confirmed", "From Trend Pullback setup trend_pullback:bull:1793940000"]);
+    expect([...el("opt-head").children].map((c) => c.textContent)).toEqual(["NIFTY spot 24287.00 1 s old", "Phase 3 decision CE SETUP", "Option side CE", "CE setup ready: Trend Pullback setup confirmed", "From Trend Pullback setup trend_pullback:bull:1793940000"]);
     expect(el("opt-head").querySelector("b")?.className).toBe(""); // (a fresh price is not in red)
     expect(el("opt-head").querySelector("[title]")?.getAttribute("title")).toBe("the setup the decision is about");
   });
@@ -68,24 +68,24 @@ describe("the header bar", () => {
     show(variant((s) => { s.trading!.decision.action = "WAIT"; opt(s).decision!.action = "WAIT"; }));
     expect(el("opt-head").children[2]?.textContent).toBe("Option side none");
     show(variant((s) => { opt(s).decision!.action = "BUY PE"; }));
-    expect(el("opt-head").children[1]?.textContent).toBe("Phase 3 decision BUY PE"); // (the options payload's own decision)
+    expect(el("opt-head").children[1]?.textContent).toBe("Phase 3 decision PE SETUP"); // (the options payload's own decision)
     expect(el("opt-head").children[2]?.textContent).toBe("Option side none"); // ... which the final decision does not match
   });
-  it("names a setup in view, and says it is not a BUY when it is not", () => {
+  it("names a setup in view, and says it is not ready when it is not", () => {
     show(variant((s) => { opt(s).decision!.action = "WAIT"; s.trading!.decision.action = "WAIT"; }));
     const from = el("opt-head").children[4]!;
     expect(from.className).toBe("mut");
-    expect(from.textContent).toBe("Setup in view (not a BUY, so no contract): Trend Pullback setup trend_pullback:bull:1793940000");
+    expect(from.textContent).toBe("Setup in view (not ready, so no contract): Trend Pullback setup trend_pullback:bull:1793940000");
   });
   it("calls a decision a BUY only when it begins with BUY", () => {
     show(variant((s) => { opt(s).decision!.action = "NOT A BUY"; }));
-    expect(el("opt-head").children[4]?.textContent).toMatch(/^Setup in view \(not a BUY, so no contract\)/);
+    expect(el("opt-head").children[4]?.textContent).toMatch(/^Setup in view \(not ready, so no contract\)/);
     show(variant((s) => { opt(s).decision!.action = "BUY PE"; }));
     expect(el("opt-head").children[4]?.textContent).toMatch(/^From Trend Pullback/);
   });
   it("leaves out what is not there: no strategy, no setup, no headline, no 'also'", () => {
     show(variant((s) => { Object.assign(opt(s).decision!, { strategy_name: null, setup_id: null, headline: null, also: [] }); }));
-    expect([...el("opt-head").children].map((c) => c.textContent)).toEqual(["NIFTY spot 24287.00 1 s old", "Phase 3 decision BUY CE", "Option side CE", ""]);
+    expect([...el("opt-head").children].map((c) => c.textContent)).toEqual(["NIFTY spot 24287.00 1 s old", "Phase 3 decision CE SETUP", "Option side CE", ""]);
     show(variant((s) => { opt(s).decision!.setup_id = null; opt(s).decision!.also = ["Range Bounce", "Breakout and Retest"]; }));
     expect(el("opt-head").children[4]?.textContent).toBe("From Trend Pullback");
     expect(el("opt-head").children[5]?.textContent).toBe("also matches: Range Bounce, Breakout and Retest");
@@ -103,22 +103,22 @@ describe("the selected contract", () => {
     expect(card().querySelector(".selhead .big")?.className).toBe("big up");
     expect([...card().querySelectorAll(".selhead > span")].slice(1).map((c) => c.textContent)).toEqual(["ITM · 2 strike(s) from ATM · -87 pts from the spot", "expiry 2026-11-10 (4 day(s))", "NIFTY10NOV202624200CE"]);
     expect(text("opt-info")).toBe(""); // a selected contract is not 'informational' 
-    expect(card().querySelector(".origin")?.textContent).toBe("Chosen for BUY CE from Trend Pullback trend_pullback · setup trend_pullback:bull:1793940000 · also matches: none");
+    expect(card().querySelector(".origin")?.textContent).toBe("Chosen for CE SETUP from Trend Pullback trend_pullback · setup trend_pullback:bull:1793940000 · also matches: none");
     expect([...card().querySelectorAll(".origin code")].map((c) => c.textContent)).toEqual(["trend_pullback", "trend_pullback:bull:1793940000"]);
   });
   it("says its origin as the decision carries it: a missing strategy ID, a missing setup, and who else agrees", () => {
     const origin = () => card().querySelector(".origin")!;
     show(variant((s) => { opt(s).decision!.strategy = null; }));
-    expect(origin().textContent).toBe("Chosen for BUY CE from Trend Pullback · setup trend_pullback:bull:1793940000 · also matches: none");
+    expect(origin().textContent).toBe("Chosen for CE SETUP from Trend Pullback · setup trend_pullback:bull:1793940000 · also matches: none");
     expect([...origin().querySelectorAll("code")].map((c) => c.textContent)).toEqual(["trend_pullback:bull:1793940000"]); // (no empty code box for a strategy ID that is not there)
     show(variant((s) => { opt(s).decision!.setup_id = null; }));
-    expect(origin().textContent).toBe("Chosen for BUY CE from Trend Pullback trend_pullback · setup – · also matches: none");
+    expect(origin().textContent).toBe("Chosen for CE SETUP from Trend Pullback trend_pullback · setup – · also matches: none");
     expect(origin().querySelectorAll("code")).toHaveLength(1);
     show(variant((s) => { opt(s).decision!.also = ["Range Bounce", "Breakout and Retest"]; }));
     expect(origin().textContent).toMatch(/also matches: Range Bounce, Breakout and Retest$/);
     expect(origin().querySelector("b:last-child")?.textContent).toBe("Range Bounce, Breakout and Retest");
     show(variant((s) => { opt(s).decision!.strategy_name = null; }));
-    expect(origin().textContent).toMatch(/^Chosen for BUY CE from – /);
+    expect(origin().textContent).toMatch(/^Chosen for CE SETUP from – /);
   });
   it("is red for a put", () => {
     show(variant((s) => { s.trading!.decision.action = "BUY PE"; opt(s).decision!.action = "BUY PE"; opt(s).selection!.kind = "PE"; sel(s).kind = "PE"; }));
@@ -198,7 +198,7 @@ describe("the selected contract", () => {
     show(base, true);
     expect(card().querySelector("h3")?.textContent).toBe("Last selected contract STALE since 10:55: not current, not actionable");
     expect(card().querySelector("h3 .stale")?.textContent).toBe("STALE since 10:55: not current, not actionable");
-    expect(card().querySelector(".origin")?.textContent).toMatch(/^Last chosen for BUY CE from Trend Pullback/);
+    expect(card().querySelector(".origin")?.textContent).toMatch(/^Last chosen for CE SETUP from Trend Pullback/);
     expect(card().querySelector("h3")?.textContent).not.toContain("not a recommendation");
   });
 });
@@ -261,7 +261,7 @@ describe("no contract selected", () => {
   it("is informational for a decision that is not a BUY, and says the whole page below is not actionable", () => {
     show(variant(wait));
     expect(card().className).toBe("panel card");
-    expect(card().querySelector("h3")?.textContent).toBe("No contract selected informational: only a BUY CE / BUY PE decision selects a contract");
+    expect(card().querySelector("h3")?.textContent).toBe("No contract selected informational: only a ready setup (CE SETUP / PE SETUP) selects a contract");
     expect(card().children[1]?.textContent).toBe("no contract: the decision is not a BUY");
     expect(card().children[2]?.textContent).toBe("Final decision: WAIT — WAIT: setup blocked. Everything below is for information only: nothing in it is selected, and none of it is actionable.");
     expect(card().querySelector("details")).toBeNull();
@@ -274,7 +274,7 @@ describe("no contract selected", () => {
   it("says a conflict: the options data offers a contract the decision does not call for", () => {
     show(variant((s) => { s.trading!.decision.action = "WAIT"; }));
     const w = card().querySelector(".warnbox")!;
-    expect(w.textContent).toBe("⚠ The options data offers a contract, but the final decision is WAIT (the options payload says BUY CE): no contract is shown as selected.");
+    expect(w.textContent).toBe("⚠ The options data offers a contract, but the final decision is WAIT (the options payload says CE SETUP): no contract is shown as selected.");
     expect(card().children[2]?.textContent).toBe("no options selection: the final decision does not call for a contract");
     expect(card().textContent).not.toContain("Chosen for");
     expect(el("opt-sel").textContent).not.toContain("CE 24200 ITM");
@@ -287,7 +287,7 @@ describe("no contract selected", () => {
   });
   it("says a conflict between the two payloads, and one with no decision", () => {
     show(variant((s) => { opt(s).decision!.action = "BUY PE"; }));
-    expect(card().querySelector(".warnbox")?.textContent).toBe("⚠ The options data offers a contract, but the final decision is BUY CE (the options payload says BUY PE): no contract is shown as selected.");
+    expect(card().querySelector(".warnbox")?.textContent).toBe("⚠ The options data offers a contract, but the final decision is CE SETUP (the options payload says PE SETUP): no contract is shown as selected.");
     expect(card().textContent).not.toContain("ruled out"); // (the two payloads disagree: no list of reasons for a side that nobody asked for)
     expect(card().querySelector("details")).toBeNull();
     show(variant((s) => { s.trading = null; }));

@@ -99,7 +99,7 @@ def test_it_fits_the_width_with_the_tables_scrolling_inside_their_own_box(page, 
     )
     assert m["scrollW"] <= m["vw"], f"the Options tab is {m['scrollW']} px wide on a {m['vw']} px screen"
     assert 0 <= m["left"] and m["right"] <= width and m["text"].startswith("SELECTED CONTRACT")
-    for needed in ("CHOSEN FOR BUY CE FROM TREND PULLBACK", "ALSO MATCHES: NONE", "QUOTE AGE: RECEIVED", "QUOTE AGE: EXCHANGE TIME", "ALTERNATIVES", "BID × UNITS", "OPEN INTEREST (UNITS)"):
+    for needed in ("CHOSEN FOR CE SETUP FROM TREND PULLBACK", "ALSO MATCHES: NONE", "QUOTE AGE: RECEIVED", "QUOTE AGE: EXCHANGE TIME", "ALTERNATIVES", "BID × UNITS", "OPEN INTEREST (UNITS)"):
         assert needed in m["text"], needed
     assert m["selected"] == 1
     keep(page, tmp_path, f"react-options-{width}x{height}")

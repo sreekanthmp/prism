@@ -33,13 +33,13 @@ describe("the one alert line", () => {
   });
 
   it("lists every alert in full in the floating list, each in its own colour", () => {
-    const l = line([item("bad", "Data not trusted", "x. No BUY decision is possible."), item("warn", "", "w"), item("act", "BUY CE ready", "enter")]);
+    const l = line([item("bad", "Data not trusted", "x. No setup can be ready."), item("warn", "", "w"), item("act", "CE setup ready", "enter")]);
     const rows = [...l.container.querySelectorAll(".alertlist .alert")].map((r) => [r.className, r.textContent]);
-    expect(rows).toEqual([["alert bad", "⛔ Data not trusted: x. No BUY decision is possible."], ["alert warn", "⚠ w"], ["alert act", "🔔 BUY CE ready: enter"]]);
+    expect(rows).toEqual([["alert bad", "⛔ Data not trusted: x. No setup can be ready."], ["alert warn", "⚠ w"], ["alert act", "🔔 CE setup ready: enter"]]);
   });
 
   it("a ready setup colours the line green unless something is wrong", () => {
-    expect(line([item("act", "BUY CE ready", "x")]).details?.className).toBe("alerts act");
+    expect(line([item("act", "CE setup ready", "x")]).details?.className).toBe("alerts act");
     expect(line([item("warn", "w", "x"), item("act", "a", "x")]).details?.className).toBe("alerts act");
     expect(line([item("act", "a", "x"), item("bad", "b", "x")]).details?.className).toBe("alerts bad");
   });
@@ -69,12 +69,12 @@ describe("the one alert line", () => {
 
 describe("clearing the setup alerts", () => {
   it("has no button unless it is given something to do", () => {
-    expect(line([item("act", "BUY CE ready", "x")]).container.querySelector("#alert-clear")).toBeNull();
+    expect(line([item("act", "CE setup ready", "x")]).container.querySelector("#alert-clear")).toBeNull();
   });
 
   it("has the button at the end of the floating list when it is given one, and a click does what it says", () => {
     let cleared = 0;
-    const r = render(<AlertLine items={[item("act", "BUY CE ready", "x"), item("warn", "", "w")]} onClear={() => { cleared++; }} />);
+    const r = render(<AlertLine items={[item("act", "CE setup ready", "x"), item("warn", "", "w")]} onClear={() => { cleared++; }} />);
     const list = r.container.querySelector(".alertlist") as HTMLElement;
     const button = list.querySelector("button#alert-clear") as HTMLButtonElement;
     expect(button.textContent).toBe("clear the setup alerts");

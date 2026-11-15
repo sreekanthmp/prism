@@ -66,6 +66,10 @@ details.alerts > .alertlist { position: absolute; left: 0; right: 0; top: 100%; 
 .seg button:focus-visible { outline: 1px solid var(--acc); outline-offset: -2px; }
 .toggles { display: flex; flex-wrap: wrap; gap: 4px 14px; color: var(--mut); }
 .toggles label { cursor: pointer; white-space: nowrap; }
+.toggles .ksw, .chart-guide .ksw { display: inline-block; width: 12px; height: 0; border-top: 2px solid var(--mut); vertical-align: middle; margin: 0 1px; } /* a sample of the line's colour and dashes: the boxes are also the key to the lines */
+.toggles .ksw:first-of-type { margin-left: 4px; }
+.kmk { display: inline-block; font-style: normal; font-size: 9px; line-height: 1; vertical-align: middle; margin: 0 1px; } .kmk.dn::before { content: "▼"; color: var(--bad); } .kmk.up::before { content: "▲"; color: var(--ok); } .kmk.dot::before { content: "●"; color: var(--warn); font-size: 11px; }
+.toggles .kmk:first-of-type { margin-left: 4px; }
 .toggles input { accent-color: var(--acc); }
 .chart-panel { padding: 6px 0 0; overflow: hidden; }
 .chart-legend { padding: 0 10px 4px; font-variant-numeric: tabular-nums; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -111,6 +115,7 @@ details.alerts > .alertlist { position: absolute; left: 0; right: 0; top: 100%; 
 .dbadge { min-width:128px; } .dtxt { font-size:26px; font-weight:800; line-height:1.05; letter-spacing:.02em; }
 .buy-ce .dtxt { color:var(--ok); } .buy-pe .dtxt { color:var(--bad); } .wait .dtxt { color:var(--warn); } .no-trade .dtxt { color:#c3cad4; }
 .dsub { font-size:11px; color:var(--mut); margin-top:2px; }
+.dline { display:flex; flex-wrap:wrap; align-items:baseline; gap:1px 12px; } .dnote { font-size:11px; color:var(--mut); cursor:help; border-bottom:1px dotted var(--mut); white-space:nowrap; } /* "rules met, not a recommendation, no measured edge" beside a ready setup's headline */
 .dhead { font-size:15px; font-weight:600; line-height:1.25; } .dblock { font-size:12px; color:var(--warn); margin-top:2px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 details.pop { position:static; } details.pop > summary { list-style:none; cursor:pointer; color:var(--acc); font-size:11.5px; user-select:none; white-space:nowrap; }
 details.pop > summary::-webkit-details-marker { display:none; }

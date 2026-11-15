@@ -1,5 +1,6 @@
 import { Fragment, type ReactNode } from "react";
 import { fmtT, n1, n2 } from "../format";
+import { actionWord, isSetupAction, NOTE, NOTE_WHY, plain } from "../labels";
 import { ACTION_CLS } from "../overviewModel";
 import type { Explain, Plan, PlanTarget, Setup, Snapshot, Trading } from "../types";
 
@@ -90,14 +91,21 @@ export function DecisionBanner({ s, t, liveSetup, stale, extra }: { s: Snapshot;
     <div className={`decision ${dc}`} id="decision">
       <div className="dbadge">
         <div className="dtxt" title="A decision is what the rules say about the NIFTY index; it is not a recommendation to trade.">
-          {stale ? "STALE" : d.action}
+          {stale ? "STALE" : actionWord(d.action)}
         </div>
-        <div className="dsub">{stale ? "last decision: " + d.action : sess}</div>
+        <div className="dsub">{stale ? "last decision: " + actionWord(d.action) : sess}</div>
       </div>
       <div>
-        <div className="dhead">{stale ? `STALE since ${fmtT(s.server_time, false)} — NOT ACTIONABLE` : d.headline}</div>
+        <div className="dline">
+          <div className="dhead">{stale ? `STALE since ${fmtT(s.server_time, false)} — NOT ACTIONABLE` : plain(d.headline)}</div>
+          {!stale && isSetupAction(d.action) ? (
+            <span className="dnote" data-testid="decision-note" title={NOTE_WHY}>
+              {NOTE}
+            </span>
+          ) : null}
+        </div>
         {stale ? (
-          <div className="dblock">Last known, not current: {d.headline}</div>
+          <div className="dblock">Last known, not current: {plain(d.headline)}</div>
         ) : blockers.length ? (
           <div className="dblock" title={blockers.join(" · ")}>
             ⏸ Blocks entry: {blockers.join(" · ")}
@@ -122,7 +130,7 @@ export function DecisionBanner({ s, t, liveSetup, stale, extra }: { s: Snapshot;
               </div>
               <ExplainBlock e={t.explain} />
               <div>
-                <b>{d.headline}</b>
+                <b>{plain(d.headline)}</b>
               </div>
               {d.reasons.map((r, i) => (
                 <div key={i} className="why up" style={{ marginLeft: 12 }}>

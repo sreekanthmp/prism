@@ -11,7 +11,7 @@ market (no broker, no database).
 import json
 
 import pytest
-from browser_support import BROWSER, browser, free_port, frozen, goto, keep, page, run_server, served  # noqa: F401
+from browser_support import BROWSER, WORD, browser, free_port, frozen, goto, keep, page, plain, run_server, served  # noqa: F401
 from dashboard_harness import base_engine
 from dashboard_states import STATES
 
@@ -35,7 +35,7 @@ def open_overview(page, url):
 
 def test_the_overview_is_the_first_tab_and_is_drawn_from_the_real_engine(page, served):
     open_overview(page, served["url"])
-    assert page.js("document.getElementById('decision').innerText.includes('BUY CE')") and page.js("document.getElementById('decision').className") == "decision buy-ce"
+    assert page.js("document.getElementById('decision').innerText.includes('CE SETUP')") and page.js("document.getElementById('decision').className") == "decision buy-ce"
     assert page.js("document.getElementById('rg').querySelectorAll('.rgc').length") == 6 and page.js("document.querySelectorAll('#tfrow .tf').length") == 4
     assert page.js("document.getElementById('tb-overview').getAttribute('aria-selected')") == "true"
     assert page.js("document.getElementById('jserr')") is None
@@ -55,8 +55,8 @@ def test_the_overview_draws_what_each_states_snapshot_calls_for_in_every_state(p
             open_overview(page, served["url"])
             got = page.js(READ)
             decision = snap["trading"]["decision"]
-            assert page.js("document.querySelector('#decision .dtxt').textContent.trim()") == action, name  # the word: BUY CE, BUY PE, WAIT, NO TRADE
-            assert " ".join(decision["headline"].split()) in got["decision"]["text"], f"{name}: the decision's headline is not on the page"
+            assert page.js("document.querySelector('#decision .dtxt').textContent.trim()") == WORD.get(action, action), name  # the word: CE SETUP, PE SETUP, WAIT, NO TRADE (the engine's value is BUY CE / BUY PE)
+            assert " ".join(plain(decision["headline"]).split()) in got["decision"]["text"], f"{name}: the decision's headline is not on the page"
             assert all(got[i] is not None for i in IDS), (name, [i for i in IDS if got[i] is None])
             assert page.js("document.getElementById('rg').querySelectorAll('.rgc').length") == 6 and page.js("document.querySelectorAll('#tfrow .tf').length") == 4, name
             assert page.js("document.getElementById('jserr')") is None, name
@@ -158,8 +158,48 @@ def test_a_server_that_stops_makes_the_overview_stale_and_a_new_one_brings_it_ba
     md2, _ = base_engine()
     server2, thread2 = run_server(create_app(md2, feed=None), port)
     try:
-        page.until("document.querySelector('.stalebar') === null && document.getElementById('decision').innerText.includes('BUY CE')", timeout=30)
+        page.until("document.querySelector('.stalebar') === null && document.getElementById('decision').innerText.includes('CE SETUP')", timeout=30)
         assert float(page.js("getComputedStyle(document.querySelector('#tab-overview')).opacity")) == 1.0
     finally:
         server2.should_exit = True
         thread2.join(timeout=10)
+
+
+# -- the engine's BUY wording is never on the page ----------------------------------------------------------------------------------------------------------------
+def test_a_ready_setup_says_the_rules_were_met_and_that_it_is_not_a_recommendation_beside_its_headline(page, served):
+    open_overview(page, served["url"])
+    got = page.js(
+        """(() => { const n = document.querySelector('#decision [data-testid=decision-note]'), h = document.querySelector('#decision .dhead'); const rn = n.getBoundingClientRect(), rh = h.getBoundingClientRect();
+        return {note: n.textContent, title: n.title, visible: rn.width > 40 && rn.height > 8, beside: Math.abs((rn.top + rn.bottom) / 2 - (rh.top + rh.bottom) / 2) < 14 && rn.left > rh.left, head: h.textContent, word: document.querySelector('#decision .dtxt').textContent.trim()}; })()"""
+    )
+    assert got["word"] == "CE SETUP" and got["head"] == "CE setup ready: Trend Pullback setup confirmed", got
+    assert got["note"] == "rules met · not a recommendation · no measured edge" and got["visible"] and got["beside"], got  # (drawn, and on the headline's own line)
+    assert "no better than random entries" in got["title"] and "700 days" in got["title"], got["title"]
+    assert page.errors == [], page.errors
+
+
+@pytest.mark.parametrize("state", ["buy_ce", "buy_pe"])
+def test_no_tab_of_the_real_page_says_buy_ce_or_buy_pe(page, tmp_path, state):
+    """Every tab, in a real browser, for the engine's BUY CE and BUY PE: the words on the page (as the eye reads them) never say BUY CE or BUY PE."""
+    import re
+
+    from browser_support import LIVE
+
+    build, _ = STATES[state]
+    md = build(str(tmp_path))
+    md.instance = {"pid": 0, "port": 0, "marker": state}
+    frozen(md)
+    port = free_port()
+    server, thread = run_server(create_app(md, feed=None), port)
+    url = f"http://127.0.0.1:{port}/"
+    try:
+        for tab in ("overview", "chart", "options", "analysis", "journal", "trades"):
+            goto(page, url + "#" + tab)
+            page.until(LIVE, timeout=30)
+            page.pause(1.2)
+            text = page.js("document.body.innerText")
+            assert not re.search(r"BUY (CE|PE)", text, re.I), (state, tab, [m.group(0) for m in re.finditer(r".{0,40}BUY (CE|PE).{0,40}", text, re.I)][:3])
+    finally:
+        server.should_exit = True
+        thread.join(timeout=10)
+    assert page.errors == [] or all("ERR_CONNECTION" in e or "WebSocket" in e for e in page.errors), page.errors

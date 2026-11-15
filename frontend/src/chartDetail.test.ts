@@ -11,13 +11,13 @@ const bars = [bar(T - 300), bar(T), bar(T + 300)]; // 10:40, 10:45, 10:50
 const row = (time: number, action: string | null, over: Partial<JournalRow> = {}): JournalRow => ({ ...journalBase.decisions[0]!, time, action, headline: `${action}: why`, ...over });
 
 describe("where the decision changed", () => {
-  it("a BUY CE is a green arrow under its candle, a BUY PE a red one over it, a WAIT an amber dot and anything else a grey dot", () => {
+  it("a CE setup is a green arrow under its candle, a PE setup a red one over it, a WAIT an amber dot and anything else a grey dot", () => {
     const m = decisionMarkers([row(T + 10, "BUY CE"), row(T + 320, "BUY PE"), row(T - 280, "WAIT"), row(T + 20, "NO TRADE")], bars, 300);
     expect(m).toEqual([
       { time: T - 300 + IST_SHIFT, position: "belowBar", shape: "circle", tone: "warn", text: "", size: 0.8, action: "WAIT" },
-      { time: T + IST_SHIFT, position: "belowBar", shape: "arrowUp", tone: "ok", text: "BUY CE", size: 1.2, action: "BUY CE" },
+      { time: T + IST_SHIFT, position: "belowBar", shape: "arrowUp", tone: "ok", text: "CE setup", size: 1.2, action: "BUY CE" },
       { time: T + IST_SHIFT, position: "belowBar", shape: "circle", tone: "mut", text: "", size: 0.6, action: "NO TRADE" },
-      { time: T + 300 + IST_SHIFT, position: "aboveBar", shape: "arrowDown", tone: "bad", text: "BUY PE", size: 1.2, action: "BUY PE" },
+      { time: T + 300 + IST_SHIFT, position: "aboveBar", shape: "arrowDown", tone: "bad", text: "PE setup", size: 1.2, action: "BUY PE" },
     ]);
   });
 
@@ -69,11 +69,11 @@ describe("where the decision changed", () => {
     expect(m.map((x) => [x.action, x.time])).toEqual([["WAIT", 1793941800 + IST_SHIFT], ["WAIT", 1793942100 + IST_SHIFT]]);
     const forming = chartVariant((c) => { c.forming = { time: 1793942700, open: 24285, high: 24287, low: 24284, close: 24286, partial: false, ticks: 4 }; });
     const withIt = decisionMarkers(journalBase.decisions, candleBars(forming).bars, forming.seconds);
-    expect(withIt.map((x) => [x.action, x.text, x.shape])).toEqual([["WAIT", "", "circle"], ["WAIT", "", "circle"], ["BUY CE", "BUY CE", "arrowUp"]]);
+    expect(withIt.map((x) => [x.action, x.text, x.shape])).toEqual([["WAIT", "", "circle"], ["WAIT", "", "circle"], ["BUY CE", "CE setup", "arrowUp"]]);
   });
 
   it("is a box under 'On the chart', on by default", () => {
-    expect(TOGGLES.map((t) => t.label)).toEqual(["EMA 20", "EMA 50", "Swings", "Levels", "Setups", "Decisions"]);
+    expect(TOGGLES.map((t) => t.label)).toEqual(["EMA 20", "EMA 50", "Key levels", "More levels", "Setup lines", "Swings", "Decisions"]);
     expect(allOn.decisions).toBe(true);
   });
 });
@@ -89,7 +89,7 @@ describe("what one candle says", () => {
     expect(d.body).toBe("closed up 6.50");
     expect(d.ema20).toBe("24279.15 (the close is 5.85 above)");
     expect(d.ema50).toBe("24250.00 (the close is 35.00 above)");
-    expect(d.below).toEqual({ label: "PDH", price: "24270.55", where: "14.5 below" }); // the nearest of the previous day's high, low and close and the open
+    expect(d.below).toEqual({ label: "Prev day high", price: "24270.55", where: "14.5 below" }); // the nearest of the previous day's high, low and close and the open
     expect(d.above).toBeNull(); // nothing over it
     expect(d.decisions).toEqual([]);
   });
@@ -99,7 +99,7 @@ describe("what one candle says", () => {
     expect(d.range).toBe("3.00 pts");
     expect(d.body).toBe("closed down 0.50");
     expect(d.ema20).toBe("24278.54 (the close is 0.04 below)");
-    expect(d.below?.label).toBe("PDH");
+    expect(d.below?.label).toBe("Prev day high");
   });
 
   it("a candle that is not there says nothing", () => {
@@ -111,8 +111,8 @@ describe("what one candle says", () => {
   it("a candle that closed on a level is 'at the close', and the nearest level over and under are told apart", () => {
     const c = chartVariant((x) => { x.levels!.support = [{ price: 24300, touches: 3 }]; x.levels!.resistance = [{ price: 24285, touches: 2 }]; });
     const d = detailFor(c, candleBars(c).bars, last)!;
-    expect(d.below).toEqual({ label: "R1 ×2", price: "24285.00", where: "at the close" }); // (the level the candle closed on is not over it)
-    expect(d.above).toEqual({ label: "S1 ×3", price: "24300.00", where: "15.0 above" });
+    expect(d.below).toEqual({ label: "Resistance · 2 touches", price: "24285.00", where: "at the close" }); // (the level the candle closed on is not over it)
+    expect(d.above).toEqual({ label: "Support · 3 touches", price: "24300.00", where: "15.0 above" });
   });
 
   it("the nearest of several: the closest under and the closest over, by the support and resistance as well as the previous day", () => {
@@ -121,20 +121,20 @@ describe("what one candle says", () => {
       x.levels!.resistance = [{ price: 24310, touches: 4 }, { price: 24400, touches: 1 }];
     });
     const d = detailFor(c, candleBars(c).bars, last)!;
-    expect([d.below?.label, d.below?.where]).toEqual(["S1 ×7", "5.0 below"]);
-    expect([d.above?.label, d.above?.where]).toEqual(["R1 ×4", "25.0 above"]);
+    expect([d.below?.label, d.below?.where]).toEqual(["Support · 7 touches", "5.0 below"]);
+    expect([d.above?.label, d.above?.where]).toEqual(["Resistance · 4 touches", "25.0 above"]);
   });
 
   it("the session's open is a level too: when it is the nearest under, it is the one said", () => {
     const c = chartVariant((x) => { x.levels!.session_open = 24280; });
-    expect(detailFor(c, candleBars(c).bars, last)!.below).toEqual({ label: "Open", price: "24280.00", where: "5.0 below" });
+    expect(detailFor(c, candleBars(c).bars, last)!.below).toEqual({ label: "Today's open", price: "24280.00", where: "5.0 below" });
   });
 
   it("a level a few tenths away is that far away, not 'at the close'", () => {
     const c = chartVariant((x) => { x.levels!.resistance = [{ price: 24285.3, touches: 2 }]; x.levels!.support = [{ price: 24284.7, touches: 5 }]; });
     const d = detailFor(c, candleBars(c).bars, last)!;
-    expect(d.above).toEqual({ label: "R1 ×2", price: "24285.30", where: "0.3 above" });
-    expect(d.below).toEqual({ label: "S1 ×5", price: "24284.70", where: "0.3 below" });
+    expect(d.above).toEqual({ label: "Resistance · 2 touches", price: "24285.30", where: "0.3 above" });
+    expect(d.below).toEqual({ label: "Support · 5 touches", price: "24284.70", where: "0.3 below" }); // (these two sit 0.6 apart, and are drawn as one on the chart: but the nearest is the nearest)
   });
 
   it("a close a few tenths from an EMA is that far from it, not 'on it'", () => {
@@ -182,7 +182,7 @@ describe("what one candle says", () => {
     const b = candleBars(c).bars;
     const d = detailFor(c, b, b.length - 1, [row(1793942705, "BUY CE", { headline: "BUY CE: Trend Pullback setup confirmed" })])!;
     expect(d.range).toBe("3.00 pts");
-    expect(d.decisions).toEqual(["BUY CE at 10:55: BUY CE: Trend Pullback setup confirmed"]);
+    expect(d.decisions).toEqual(["CE setup ready at 10:55: CE setup ready: Trend Pullback setup confirmed"]);
   });
 
   it("the daily chart has no decisions to say", () => {

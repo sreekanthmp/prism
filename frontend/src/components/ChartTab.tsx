@@ -1,18 +1,34 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import type { ChartFetcher } from "../chartApi";
-import { allOn, candleBars, decisionMarkers, detailFor, FACT_HELP, legendFor, setupLine, TOGGLES, type Detail, type Toggles } from "../chartModel";
+import { allOn, candleBars, decisionMarkers, detailFor, FACT_HELP, legendFor, sameToggles, setupLine, simpleOn, TOGGLES, type Detail, type Role, type Toggles } from "../chartModel";
 import { CHART_TIMEFRAMES, type ChartData, type ChartFacts, type ChartTimeframe } from "../chartTypes";
 import { CHART_RETRY_MS, useChart } from "../useChart";
 import { fmtT, n1, n2 } from "../format";
+import { actionWord } from "../labels";
 import type { JournalRow } from "../types";
-import { PriceChart, type ChartHandle } from "./PriceChart";
+import { lookOf, PriceChart, type ChartHandle } from "./PriceChart";
 
 /** What the viewer chose: kept by the page, so leaving the tab and coming back finds the chart as it was left. */
 export interface ChartPrefs {
   timeframe: ChartTimeframe;
   on: Toggles;
 }
-export const defaultPrefs: ChartPrefs = { timeframe: "5m", on: allOn };
+export const defaultPrefs: ChartPrefs = { timeframe: "5m", on: simpleOn }; // the simple view to begin with: the swings and the other levels are one click away
+
+/** A sample of how a kind of line looks on the chart (its colour, its dashes, its fade): drawn next to the name of the box that switches it, so the controls are also the key to the lines. */
+const Seg = ({ role }: { role: Role }) => {
+  const l = lookOf(role);
+  return <i className="ksw" style={{ borderTopColor: l.css, borderTopStyle: l.border, opacity: l.opacity }} aria-hidden="true" />;
+};
+const KEY: Record<keyof Toggles, ReactNode> = {
+  ema20: <i className="ksw" style={{ borderTopColor: "var(--ema20)" }} aria-hidden="true" />,
+  ema50: <i className="ksw" style={{ borderTopColor: "var(--ema50)" }} aria-hidden="true" />,
+  levels: <><Seg role="previous" /><Seg role="open" /><Seg role="support" /><Seg role="resistance" /></>,
+  moreLevels: <><Seg role="support" /><Seg role="resistance" /></>,
+  setups: <><Seg role="trigger" /><Seg role="invalidation" /><Seg role="target" /></>,
+  swings: <><i className="kmk dn" aria-hidden="true" /><i className="kmk up" aria-hidden="true" /></>,
+  decisions: <i className="kmk dot" aria-hidden="true" />,
+};
 
 function Facts({ f, daily }: { f: ChartFacts | null | undefined; daily: boolean }) {
   if (!f) return <p className="mut chart-facts">{daily ? "Prism reads no trend from daily candles: this chart shows them as they are." : "No indicators yet."}</p>;
@@ -53,9 +69,13 @@ function Guide() {
       <div className="secbody">
         <div><b>Candles.</b> Green: the candle closed above where it opened. Red: it closed below. While the market is open the last one is still forming.</div>
         <div>{sw("var(--ema20)")} <b>EMA 20</b> and {sw("var(--ema50)")} <b>EMA 50</b>: moving averages of the close, the fast one and the slow one. They smooth the candles so the direction is easier to see.</div>
-        <div><b>H and L arrows.</b> Swing highs (a red arrow over a candle) and swing lows (a green arrow under one): turning points that Prism has confirmed and uses for its structure.</div>
-        <div><b>Decisions.</b> Where Prism's decision <i>changed</i> today: a green <b>BUY CE</b> arrow under a candle, a red <b>BUY PE</b> arrow over it, an {sw("var(--warn)", "dot")} amber dot for WAIT and a {sw("var(--mut)", "dot")} grey dot for NO TRADE. They come from today's journal (it is kept for one day at a time), so an earlier day has none, and neither has the daily chart.</div>
-        <div><b>Levels.</b> {sw("var(--warn)")} <b>PDH, PDL, PDC</b>: the previous day's high, low and close. {sw("var(--mut)")} <b>Open</b>: the session's open. <b>S1, S2…</b> and <b>R1, R2…</b>: the nearest support below and resistance above; the number after × is how many times price turned at that level (more is stronger).</div>
+        <div><b>Swings</b> (off to begin with). An <b>H</b> (a red arrow over a candle) at every confirmed swing high and an <b>L</b> (a green arrow under one) at every swing low: turning points that Prism has confirmed and uses for its structure. There are a lot of them, which is why they are off to begin with.</div>
+        <div><b>Decisions.</b> Where Prism's decision <i>changed</i> today: a green <b>CE setup</b> arrow under a candle, a red <b>PE setup</b> arrow over it, an {sw("var(--warn)", "dot")} amber dot for WAIT and a {sw("var(--mut)", "dot")} grey dot for NO TRADE. They come from today's journal (it is kept for one day at a time), so an earlier day has none, and neither has the daily chart.</div>
+        <div>
+          <b>Key levels.</b> <Seg role="previous" /> <b>Prev day high, low and close</b> (amber, dotted), <Seg role="open" /> <b>Today's open</b> (grey, dotted), <Seg role="support" /> <b>Support</b> (a floor: green, dashed, the nearest one at or under the price) and <Seg role="resistance" />{" "}
+          <b>Resistance</b> (a ceiling: red, dashed, the nearest one over it). "3 touches" is how many times price turned there: more is stronger. Levels that sit within about three quarters of a candle of one another are drawn once, under both names ("Prev day close + Support").
+        </div>
+        <div><b>More levels</b> (off to begin with). Every other support and resistance Prism found. Press <b>Everything</b> to see all of it, <b>Simple</b> to go back.</div>
         <div><b>Setups.</b> Only while one is live: a {sw("var(--acc)")} dashed <b>trigger</b>, a {sw("var(--ok)")} dotted <b>entry area</b>, a {sw("var(--bad)")} solid <b>invalidation</b> (the setup is over beyond it) and {sw("var(--ok)")} dashed <b>targets</b>. They are written out under the chart too.</div>
         <div><b>The line under the legend.</b> For the candle under the mouse (the latest one when the mouse is away): how big it was, how it closed, where it closed against the two EMAs, the nearest level under it and over it, and what Prism's decision said on it.</div>
         <div><b>The numbers under the chart.</b> Hover each one for what it means. They are computed on this timeframe's candles.</div>
@@ -92,10 +112,15 @@ export function ChartTab({ prefs, onPrefs, paused, fetcher, onReady, decisions }
             </button>
           ))}
         </div>
+        <div role="group" aria-label="View" className="seg" title="Simple: the candles, the two averages, the key levels, the setup's lines and where the decision changed. Everything: also the swing arrows and every other support and resistance.">
+          <button type="button" aria-pressed={sameToggles(prefs.on, simpleOn)} onClick={() => onPrefs({ ...prefs, on: simpleOn })}>Simple</button>
+          <button type="button" aria-pressed={sameToggles(prefs.on, allOn)} onClick={() => onPrefs({ ...prefs, on: allOn })}>Everything</button>
+        </div>
         <div role="group" aria-label="On the chart" className="toggles">
           {TOGGLES.map((t) => (
-            <label key={t.id}>
-              <input type="checkbox" checked={prefs.on[t.id]} onChange={(e) => onPrefs({ ...prefs, on: { ...prefs.on, [t.id]: e.target.checked } })} /> {t.label}
+            <label key={t.id} title={t.hint}>
+              <input type="checkbox" checked={prefs.on[t.id]} onChange={(e) => onPrefs({ ...prefs, on: { ...prefs.on, [t.id]: e.target.checked } })} /> {KEY[t.id]}
+              {t.label}
             </label>
           ))}
         </div>
@@ -139,7 +164,7 @@ export function ChartTab({ prefs, onPrefs, paused, fetcher, onReady, decisions }
         <>
           <Facts f={data.facts} daily={tf.id === "1d"} />
           <div className="panel" data-testid="chart-setups">
-            <h3>Prism's setups on this chart{data.decision?.action ? ` · decision: ${data.decision.action}` : ""}</h3>
+            <h3>Prism's setups on this chart{data.decision?.action ? ` · decision: ${actionWord(data.decision.action)}` : ""}</h3>
             {data.setups.length === 0 ? (
               <p className="mut">No setup is live. While one is, its trigger, entry area, invalidation and targets are drawn on the chart and written out here.</p>
             ) : (

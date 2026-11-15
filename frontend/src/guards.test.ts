@@ -15,9 +15,14 @@ describe("the source of the dashboard", () => {
         "App.tsx", "alerts.ts", "connection.ts", "format.ts", "main.tsx", "types.ts", "useConnection.ts", "components/Header.tsx", "components/AlertLine.tsx", "components/Tabs.tsx", "components/StaleBar.tsx",
         "chartTypes.ts", "chartApi.ts", "chartModel.ts", "useChart.ts", "components/ChartTab.tsx", "components/PriceChart.tsx",
         "overviewModel.ts", "components/Overview.tsx", "components/OverviewPanels.tsx", "components/Decision.tsx", "optionsModel.ts", "components/Options.tsx", "journalModel.ts", "journalApi.ts", "useJournal.ts", "components/Journal.tsx",
-        "checklistModel.ts", "components/Checklist.tsx", "alertEvents.ts", "alertEffects.ts", "useAlerts.ts", "tradesApi.ts", "tradesModel.ts", "useTrades.ts", "useRisk.ts", "components/Trades.tsx", "analysisModel.ts", "components/Analysis.tsx", "components/AnalysisStrategies.tsx", "components/AnalysisTables.tsx", "components/AnalysisHealth.tsx",
+        "labels.ts", "checklistModel.ts", "components/Checklist.tsx", "alertEvents.ts", "alertEffects.ts", "useAlerts.ts", "tradesApi.ts", "tradesModel.ts", "useTrades.ts", "useRisk.ts", "components/Trades.tsx", "analysisModel.ts", "components/Analysis.tsx", "components/AnalysisStrategies.tsx", "components/AnalysisTables.tsx", "components/AnalysisHealth.tsx",
       ]),
     );
+  });
+
+  it("never draws the engine's BUY CE / BUY PE as words: a component says it through labels.ts (the value is the engine's, the words are the dashboard's)", () => {
+    const noComments = (text: string) => text.replace(/\/\*[\s\S]*?\*\//g, "").replace(/(^|[^:])\/\/.*$/gm, "$1");
+    for (const s of sources.filter((x) => x.path.startsWith("components/"))) expect(noComments(s.text), s.path).not.toMatch(/BUY (CE|PE)/);
   });
 
   it("never turns a string from the server into markup", () => {

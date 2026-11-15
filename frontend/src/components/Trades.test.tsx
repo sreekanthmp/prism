@@ -57,7 +57,7 @@ describe("the notebook of today's trades", () => {
     expect(heads).toEqual(["Time", "Side", "Instrument", "Qty", "Price", "Sold", "Result", "Prism said", "Note", ""]);
     const rows = [...t.container.querySelectorAll("table.t tr")].slice(1).map((r) => [...r.children].map((c) => words(c.textContent)));
     expect(rows).toEqual([
-      ["10:40:00", "BUY", "NIFTY 24500 CE 17NOV", "150", "100.50", "100", "Rs 1,950", "BUY CE at 24281.00 · followed Prism: yes: the setup you named", "first lot trend_pullback:bull:1793940000", "void"],
+      ["10:40:00", "BUY", "NIFTY 24500 CE 17NOV", "150", "100.50", "100", "Rs 1,950", "CE SETUP at 24281.00 · followed Prism: yes: the setup you named", "first lot trend_pullback:bull:1793940000", "void"],
       ["10:50:00", "BUY", "NIFTY 24500 CE 17NOV", "75", "95.00", "0", "", "WAIT at 24262.50 · followed Prism: no", "", "void"],
       ["10:55:00", "SELL", "NIFTY 24500 CE 17NOV", "100", "120.00", "", "Rs 1,950", "", "took part off", "void"],
     ]);

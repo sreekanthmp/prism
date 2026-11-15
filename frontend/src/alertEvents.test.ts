@@ -57,22 +57,22 @@ describe("a setup becomes ready", () => {
     const e = events[0]!;
     expect(e.level).toBe("act");
     expect(e.key).toBe("ready:" + setup.id);
-    expect(e.title).toBe("BUY CE ready: Trend Pullback");
+    expect(e.title).toBe("CE setup ready: Trend Pullback");
     expect(e.text).toBe(`setup ${setup.id}: entry area 24281.00 – 24287.06, trigger 24281.00, invalidation 24270.48. You decide and place any order yourself.`);
   });
-  it("says BUY PE for a put setup, and the side as it is for anything else", () => {
-    expect(titles(play([staged("CONFIRMED", { direction: "PE" }), staged("READY_TO_ACT", { direction: "PE" })]).events)).toEqual(["BUY PE ready: Trend Pullback"]);
-    expect([sideWord("CE"), sideWord("PE"), sideWord("X")]).toEqual(["BUY CE", "BUY PE", "X"]);
+  it("says PE setup for a put setup, and the side as it is for anything else", () => {
+    expect(titles(play([staged("CONFIRMED", { direction: "PE" }), staged("READY_TO_ACT", { direction: "PE" })]).events)).toEqual(["PE setup ready: Trend Pullback"]);
+    expect([sideWord("CE"), sideWord("PE"), sideWord("X")]).toEqual(["CE setup", "PE setup", "X"]);
   });
   it("a setup that appears already ready is announced", () => {
-    expect(titles(play([noSetups(), base]).events)).toEqual(["BUY CE ready: Trend Pullback"]);
+    expect(titles(play([noSetups(), base]).events)).toEqual(["CE setup ready: Trend Pullback"]);
   });
   it("two setups ready at once are two alerts", () => {
     const other = { ...structuredClone(setup), id: "breakout_retest:bull:1793940300", strategy_name: "Breakout and Retest" };
     const first = staged("CONFIRMED");
     first.trading!.setups.push({ ...structuredClone(other), stage: "CONFIRMED" });
     const second = variant((s) => { s.trading!.setups.push(structuredClone(other)); });
-    expect(titles(play([first, second]).events)).toEqual(["BUY CE ready: Trend Pullback", "BUY CE ready: Breakout and Retest"]);
+    expect(titles(play([first, second]).events)).toEqual(["CE setup ready: Trend Pullback", "CE setup ready: Breakout and Retest"]);
   });
   it("is silent about an entry area that is only left (it is on the page; it is news only if the setup then ends or is blocked)", () => {
     expect(play([base, at(staged("CONFIRMED"), 5), at(staged("CONFIRMED"), 600)]).events).toEqual([]);
@@ -90,16 +90,16 @@ describe("a ready setup stops being ready", () => {
   ];
   it.each(cases)("%s %j: a warning that says why", (after, over, said) => {
     const { events } = play([base, staged(after, over)]);
-    expect(events).toEqual([{ level: "warn", key: "ended:" + setup.id, title: "BUY CE no longer ready: Trend Pullback", text: `setup ${setup.id}: ${said}` }]);
+    expect(events).toEqual([{ level: "warn", key: "ended:" + setup.id, title: "CE setup no longer ready: Trend Pullback", text: `setup ${setup.id}: ${said}` }]);
   });
   it("one that is gone altogether has ended", () => {
     expect(play([base, noSetups()]).events[0]?.text).toBe(`setup ${setup.id}: it has ended.`);
   });
   it("one that goes ready and then ends is two alerts, in the order they happened", () => {
-    expect(titles(play([staged("CONFIRMED"), base, staged("INVALIDATED")]).events)).toEqual(["BUY CE ready: Trend Pullback", "BUY CE no longer ready: Trend Pullback"]);
+    expect(titles(play([staged("CONFIRMED"), base, staged("INVALIDATED")]).events)).toEqual(["CE setup ready: Trend Pullback", "CE setup no longer ready: Trend Pullback"]);
   });
   it("an ended setup is always news: it cannot flicker back", () => {
-    expect(titles(play([base, at(noSetups(), 5)]).events)).toEqual(["BUY CE no longer ready: Trend Pullback"]);
+    expect(titles(play([base, at(noSetups(), 5)]).events)).toEqual(["CE setup no longer ready: Trend Pullback"]);
   });
 });
 
@@ -107,7 +107,7 @@ describe("a flickering entry area is one piece of news, not twenty (the real jou
   it("a setup flickering in and out of the entry area raises one alert", () => {
     const snaps = Array.from({ length: 41 }, (_, i) => at(i % 2 ? base : staged("CONFIRMED"), i * 5)); // 40 changes in 200 s
     const { events } = play(snaps);
-    expect(titles(events)).toEqual(["BUY CE ready: Trend Pullback"]);
+    expect(titles(events)).toEqual(["CE setup ready: Trend Pullback"]);
   });
   it("a setup that was ready when the page opened and then flickers raises nothing", () => {
     expect(play([base, at(staged("CONFIRMED"), 5), at(base, 10), at(staged("CONFIRMED"), 15), at(base, 20)]).events).toEqual([]);
@@ -181,7 +181,7 @@ describe("snapshots that lack things do not break it", () => {
     const odd = variant((s) => { s.trading = null; delete s.health.readiness; });
     expect(() => play([base, odd, base])).not.toThrow();
     const noList = variant((s) => { (s.trading as unknown as { setups: unknown }).setups = null; });
-    expect(play([base, noList]).events).toEqual([expect.objectContaining({ title: "BUY CE no longer ready: Trend Pullback", text: `setup ${setup.id}: it has ended.` })]);
+    expect(play([base, noList]).events).toEqual([expect.objectContaining({ title: "CE setup no longer ready: Trend Pullback", text: `setup ${setup.id}: it has ended.` })]);
   });
   it("a setup with no id is not a setup (it cannot be told from another)", () => {
     const anon = variant((s) => { (s.trading!.setups[0] as unknown as { id: unknown }).id = null; });
@@ -189,7 +189,7 @@ describe("snapshots that lack things do not break it", () => {
   });
   it("what a snapshot says is only ever text", () => {
     const { events } = play([staged("CONFIRMED", { id: EVIL, strategy_name: EVIL }), staged("READY_TO_ACT", { id: EVIL, strategy_name: EVIL })]);
-    expect(events[0]?.title).toBe(`BUY CE ready: ${EVIL}`);
+    expect(events[0]?.title).toBe(`CE setup ready: ${EVIL}`);
   });
 });
 

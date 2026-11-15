@@ -245,7 +245,7 @@ describe("the strategies", () => {
   it("end with the decision: its headline, reasons for and against, who agrees, the market in words and the context", () => {
     show(variant((s) => { t(s).decision.also = ["Range Bounce"]; }));
     const text = secText("a-strat");
-    expect(text).toContain("BUY CE: Trend Pullback setup confirmed");
+    expect(text).toContain("CE setup ready: Trend Pullback setup confirmed");
     expect(text).toContain("+ 1H bullish (ADX 100.0); 15M bullish with HH_HL structure");
     expect(text).toContain("− 15M RSI 73.9: momentum is already stretched in this direction");
     expect(text).toContain("also matches: Range Bounce");
