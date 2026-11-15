@@ -29,7 +29,7 @@ from app.engine import MarketData, reading
 from app.journal import Journal, read
 from app.main import create_app
 
-ROUTES = ["/api/state", "/api/trading", "/api/options", "/api/analysis", "/api/health", "/api/readiness", "/api/journal"]
+ROUTES = ["/api/state", "/api/trading", "/api/options", "/api/analysis", "/api/health", "/api/readiness", "/api/journal", "/api/chart?timeframe=5m", "/api/chart?timeframe=1d"]
 
 
 def arrive(world, md, clock, slot):

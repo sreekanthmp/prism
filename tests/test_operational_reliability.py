@@ -645,6 +645,8 @@ def test_a_failing_analysis_cannot_break_the_readiness_check_or_the_health_endpo
 
 
 def test_the_dashboard_shows_the_readiness_stages_and_the_not_ready_banner():
-    html = (ROOT / "app" / "static" / "index.html").read_text(encoding="utf-8")
-    for needle in ("c-ready", "NOT READY", "READY FOR OPEN", "Start-up stage", "Decisions permitted", "Decisions are blocked until the data is complete and trusted", "readinessBlock", "Next retry"):
+    from dashboard_harness import dashboard_source
+
+    html = dashboard_source()  # the dashboard's own source: the wording it promises
+    for needle in ("c-ready", "NOT READY", "READY FOR OPEN", "Start-up stage", "Decisions permitted", "Decisions are blocked until the data is complete and trusted", "Next retry"):
         assert needle in html, needle

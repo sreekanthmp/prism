@@ -1,0 +1,31 @@
+{
+  "name": "prism-dashboard",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Prism's React dashboard (Stage 9). Built into ../app/static/app and served by Prism at /app; Prism itself needs only Python to run.",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "typecheck": "tsc --noEmit",
+    "build": "tsc --noEmit && vite build && node scripts/stamp.mjs",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "lightweight-charts": "5.2.1",
+    "react": "18.3.1",
+    "react-dom": "18.3.1"
+  },
+  "devDependencies": {
+    "@testing-library/dom": "10.4.2",
+    "@testing-library/jest-dom": "6.9.1",
+    "@testing-library/react": "16.3.3",
+    "@testing-library/user-event": "14.6.8",
+    "@types/react": "18.3.31",
+    "@types/react-dom": "18.3.7",
+    "@vitejs/plugin-react": "4.7.0",
+    "jsdom": "28.1.0",
+    "typescript": "5.9.3",
+    "vite": "6.4.5",
+    "vitest": "4.1.12"
+  }
+}

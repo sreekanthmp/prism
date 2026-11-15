@@ -1,0 +1,89 @@
+{
+ "available": true,
+ "file": "trades-2026-11-06.jsonl",
+ "trades": [
+  {
+   "v": 1,
+   "kind": "trade",
+   "id": "t1793941800000-1",
+   "t": 1793941800.0,
+   "time": "2026-11-06T10:40:00+05:30",
+   "instrument": "NIFTY 24500 CE 17NOV",
+   "side": "BUY",
+   "qty": 150,
+   "price": 100.5,
+   "setup_id": "trend_pullback:bull:1793940000",
+   "note": "first lot",
+   "prism": {
+    "action": "BUY CE",
+    "setup_id": "trend_pullback:bull:1793940000",
+    "strategy": "trend_pullback",
+    "price": 24281.0
+   },
+   "matched": 100,
+   "pnl": null,
+   "lot_pnl": 1950.0,
+   "followed": "yes: the setup you named"
+  },
+  {
+   "v": 1,
+   "kind": "trade",
+   "id": "t1793942400000-2",
+   "t": 1793942400.0,
+   "time": "2026-11-06T10:50:00+05:30",
+   "instrument": "NIFTY 24500 CE 17NOV",
+   "side": "BUY",
+   "qty": 75,
+   "price": 95.0,
+   "setup_id": null,
+   "note": null,
+   "prism": {
+    "action": "WAIT",
+    "setup_id": null,
+    "strategy": null,
+    "price": 24262.5
+   },
+   "matched": 0,
+   "pnl": null,
+   "lot_pnl": 0.0,
+   "followed": "no"
+  },
+  {
+   "v": 1,
+   "kind": "trade",
+   "id": "t1793942700000-3",
+   "t": 1793942700.0,
+   "time": "2026-11-06T10:55:00+05:30",
+   "instrument": "NIFTY 24500 CE 17NOV",
+   "side": "SELL",
+   "qty": 100,
+   "price": 120.0,
+   "setup_id": null,
+   "note": "took part off",
+   "prism": null,
+   "matched": 100,
+   "pnl": 1950.0,
+   "lot_pnl": null,
+   "followed": null
+  }
+ ],
+ "voided": [],
+ "open": [
+  {
+   "instrument": "NIFTY 24500 CE 17NOV",
+   "qty": 125,
+   "average_price": 97.2
+  }
+ ],
+ "realised": 1950.0,
+ "lost_today": 0.0,
+ "limits": {
+  "capital": 100000.0,
+  "per_trade_pct": 2.0,
+  "per_trade_loss": 2000.0,
+  "max_daily_loss": 5000.0
+ },
+ "daily_loss_used_pct": 0.0,
+ "daily_loss_reached": false,
+ "basis": "arithmetic on the prices you typed, long option trades, first in first out; no brokerage, tax or slippage; not an account statement"
+}

@@ -257,10 +257,10 @@ def test_the_journal_brief_of_a_selected_contract_carries_the_three_ages():
 
 
 def test_the_dashboard_labels_the_three_clocks_and_the_freshness():
-    from pathlib import Path
+    from dashboard_harness import dashboard_source
 
-    html = (Path(__file__).resolve().parent.parent / "app" / "static" / "index.html").read_text(encoding="utf-8")
-    for label in ("receipt age", "exchange-time age", "last-trade age", "Freshness: receipt / exchange / last trade", "Receipt age", "exchange_status", "FRESH_CLS", "exchange_stale_seconds"):
+    html = dashboard_source()  # the dashboard's own source: the wording it promises
+    for label in ("receipt age", "exchange-time age", "last-trade age", "Freshness: receipt / exchange / last trade", "Receipt age", "exchange_status", "exchange_stale_seconds"):
         assert label in html, label
     assert "Recent receipt" not in html  # the dashboard shows the flag text from the API, it does not restate it
     assert isinstance(MarketData, type)

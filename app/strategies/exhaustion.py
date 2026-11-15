@@ -78,13 +78,18 @@ def find_reversal(v: View, p: Params, atr15: float) -> tuple[Reversal | None, li
     # then a higher low and a higher high) and a put an up structure that turned down (higher lows and higher highs, then a lower high and a lower low).
     hi, lo = ("high", "low") if v.sgn > 0 else ("low", "high")
     was, now_w = ("lower", "higher") if v.sgn > 0 else ("higher", "lower")
-    was_rel, now_rel = ("under", "over") if v.sgn > 0 else ("over", "under")
     if len(highs) < 3 or len(lows) < 3:
         n_hi, n_lo = (len(highs), len(lows)) if v.sgn > 0 else (len(lows), len(highs))
         return None, [chk("15M swing structure", None, f"only {n_hi} swing highs and {n_lo} swing lows are confirmed: a structural change needs 3 of each")]
     (_, ha), (_, hb), (tc, hc) = highs[-3:]
     (_, la), (tlb, lb), (tlc, lc) = lows[-3:]
-    px = v.px
+    px, real = v.px, v.real
+
+    def trail(label: str, a: float, b: float) -> str:
+        """`highs 24,760.00 → 24,650.00 (lower)`: the two swings in real prices, oldest first, and which way the second moved from the first. The words say what WAS found, true or not."""
+        ra, rb = real(a), real(b)
+        return f"{label}s {px(a)} → {px(b)} ({'higher' if rb > ra else 'lower' if rb < ra else 'level'})"
+
     before = hb < ha and lb < la
     now = hc > hb and lc > lb
     leg = ha - lb
@@ -93,8 +98,8 @@ def find_reversal(v: View, p: Params, atr15: float) -> tuple[Reversal | None, li
     after = [b for b in v.b15 if b.start >= tlb]
     intact = bool(after) and min(b.l for b in after) >= lb
     checks = [
-        chk(f"{'down' if v.sgn > 0 else 'up'} structure before", before, f"15M {was} {hi} {px(hb)} {was_rel} {px(ha)} and {was} {lo} {px(lb)} {was_rel} {px(la)}"),
-        chk("structure turned", now, f"then a {now_w} {lo} {px(lc)} {now_rel} {px(lb)} and a {now_w} {hi} {px(hc)} {now_rel} {px(hb)}"),
+        chk(f"{'down' if v.sgn > 0 else 'up'} structure before", before, f"needs a {was} {hi} and a {was} {lo}; found 15M {trail(hi, ha, hb)} and {trail(lo, la, lb)}"),
+        chk("structure turned", now, f"needs a {now_w} {lo} and a {now_w} {hi}; found 15M {trail(lo, lb, lc)} and {trail(hi, hb, hc)}"),
         chk(f"the exhausted leg was at least {p.ter_min_leg_atr15:g} ATR15", leg >= p.ter_min_leg_atr15 * atr15, f"the leg from {px(ha)} to {px(lb)} was {leg:.1f} pts = {leg / atr15:.1f}x ATR15"),
         chk(f"confirmed within the last {p.ter_reversal_max_bars_15m} 15M candles", 0 <= age <= p.ter_reversal_max_bars_15m, f"confirmed {hm(confirmed_at)}, {age:.1f} 15M candles ago"),
         chk("the exhaustion extreme still holds", intact, f"no 15M candle has traded {v.under} {px(lb)} since it formed"),
