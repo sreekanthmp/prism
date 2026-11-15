@@ -1,0 +1,307 @@
+{
+ "available": true,
+ "file": "decisions-2026-11-06.jsonl",
+ "decisions": [
+  {
+   "time": 1793942705.0,
+   "reason": "changed",
+   "price": 24285.0,
+   "action": "BUY CE",
+   "headline": "BUY CE: Trend Pullback setup confirmed",
+   "strategy_name": "Trend Pullback",
+   "reasons": [
+    "1H bullish (ADX 100.0); 15M bullish with HH_HL structure",
+    "pulled back 36.0 pts (2.7x ATR15) from the 24,308.00 high to 24,272.00, at previous day high 24,270.55",
+    "the pullback holds above the leg's origin 24,249.45, so the bullish structure is intact",
+    "bullish rejection candle at 10:40 (lower wick 56% of its range)"
+   ],
+   "against": [
+    "15M RSI 73.9: momentum is already stretched in this direction"
+   ],
+   "strategy": "trend_pullback",
+   "setup_id": "trend_pullback:bull:1793940000",
+   "also": [],
+   "also_setups": [],
+   "decision_setup": {
+    "id": "trend_pullback:bull:1793940000",
+    "strategy": "trend_pullback",
+    "strategy_name": "Trend Pullback",
+    "direction": "CE",
+    "status": "CONFIRMED",
+    "stage": "READY_TO_ACT",
+    "actionable": true,
+    "price_state": "in_entry_area",
+    "level": 24249.45,
+    "level_label": "leg origin",
+    "trigger": 24281.0,
+    "zone": [
+     24281.0,
+     24287.062803591663
+    ],
+    "invalidation": 24270.484299102085,
+    "extreme": 24272.0,
+    "detected_at": 1793941805.0,
+    "status_since": 1793942705.0,
+    "confirmed_at": 1793942705.0,
+    "confirmed_bar_end": 1793942700.0,
+    "resumed": false,
+    "plan": {
+     "entry_reference": 24281.0,
+     "risk_points": 10.51570089791494,
+     "targets": [
+      {
+       "n": 1,
+       "price": 24308.0,
+       "label": "prior high (where this pullback started)",
+       "distance": 27.0,
+       "reward_risk": 2.5675891946825513
+      }
+     ],
+     "note": "only one level was detected beyond the trigger, so there is no second target",
+     "basis": "index points from the trigger, not option premium"
+    },
+    "blockers": [],
+    "note": ""
+   },
+   "restart": null,
+   "v": 2,
+   "direction": "bullish",
+   "regime": "trend_up",
+   "options": null,
+   "counter_trend": [
+    {
+     "strategy_name": "Trend Exhaustion Reversal",
+     "side": "PE",
+     "needed": true,
+     "granted": false,
+     "reason": "denied: weakening continuation (regime fact: 0 of 6 weakening checks hold (needs 2))"
+    }
+   ],
+   "regime_active": [
+    "strong trend: bullish",
+    "range / pause / pullback / breakout: pullback"
+   ]
+  },
+  {
+   "time": 1793942105.0,
+   "reason": "changed",
+   "price": 24280.0,
+   "action": "WAIT",
+   "headline": "WAIT: Trend Pullback (CE) is developing",
+   "strategy_name": "Trend Pullback",
+   "reasons": [
+    "Trend Pullback (CE) is waiting for confirmation",
+    "a completed 5M bullish candle closes above 24,281.00 (body of at least 0.4x ATR5, closing near its extreme)",
+    "1H bullish (ADX 100.0); 15M bullish with HH_HL structure",
+    "pulled back 36.0 pts (2.7x ATR15) from the 24,308.00 high to 24,272.00, at previous day high 24,270.55"
+   ],
+   "against": [
+    "15M RSI 73.9: momentum is already stretched in this direction",
+    "1M is bearish, against the bullish side (not a reason to skip the setup by itself)"
+   ],
+   "strategy": "trend_pullback",
+   "setup_id": "trend_pullback:bull:1793940000",
+   "also": [],
+   "also_setups": [],
+   "decision_setup": {
+    "id": "trend_pullback:bull:1793940000",
+    "strategy": "trend_pullback",
+    "strategy_name": "Trend Pullback",
+    "direction": "CE",
+    "status": "WAITING_FOR_CONFIRMATION",
+    "stage": "WAITING_FOR_CONFIRMATION",
+    "actionable": false,
+    "price_state": null,
+    "level": 24249.45,
+    "level_label": "leg origin",
+    "trigger": 24281.0,
+    "zone": [
+     24281.0,
+     24287.13792605897
+    ],
+    "invalidation": 24270.465518485256,
+    "extreme": 24272.0,
+    "detected_at": 1793941805.0,
+    "status_since": 1793942105.0,
+    "confirmed_at": null,
+    "confirmed_bar_end": null,
+    "resumed": false,
+    "plan": {
+     "entry_reference": 24281.0,
+     "risk_points": 10.534481514743675,
+     "targets": [
+      {
+       "n": 1,
+       "price": 24308.0,
+       "label": "prior high (where this pullback started)",
+       "distance": 27.0,
+       "reward_risk": 2.563011759260462
+      }
+     ],
+     "note": "only one level was detected beyond the trigger, so there is no second target",
+     "basis": "index points from the trigger, not option premium"
+    },
+    "blockers": [],
+    "note": ""
+   },
+   "restart": null,
+   "v": 2,
+   "direction": "bullish",
+   "regime": "trend_up",
+   "options": null,
+   "counter_trend": [
+    {
+     "strategy_name": "Trend Exhaustion Reversal",
+     "side": "PE",
+     "needed": true,
+     "granted": false,
+     "reason": "denied: weakening continuation (regime fact: 0 of 6 weakening checks hold (needs 2))"
+    }
+   ],
+   "regime_active": [
+    "strong trend: bullish",
+    "range / pause / pullback / breakout: pullback"
+   ]
+  },
+  {
+   "time": 1793941805.0,
+   "reason": "start",
+   "price": 24278.0,
+   "action": "WAIT",
+   "headline": "WAIT: Trend Pullback (CE) is developing",
+   "strategy_name": "Trend Pullback",
+   "reasons": [
+    "Trend Pullback (CE) is detected",
+    "a completed 5M bullish candle closes above 24,284.00 (body of at least 0.4x ATR5, closing near its extreme)",
+    "1H bullish (ADX 100.0); 15M bullish with HH_HL structure",
+    "pulled back 31.0 pts (2.4x ATR15) from the 24,308.00 high to 24,277.00, at 5M EMA20 24,278.39"
+   ],
+   "against": [
+    "15M RSI 78.0: momentum is already stretched in this direction",
+    "1M is bearish, against the bullish side (not a reason to skip the setup by itself)"
+   ],
+   "strategy": "trend_pullback",
+   "setup_id": "trend_pullback:bull:1793940000",
+   "also": [],
+   "also_setups": [],
+   "decision_setup": {
+    "id": "trend_pullback:bull:1793940000",
+    "strategy": "trend_pullback",
+    "strategy_name": "Trend Pullback",
+    "direction": "CE",
+    "status": "DETECTED",
+    "stage": "DETECTED",
+    "actionable": false,
+    "price_state": null,
+    "level": 24249.45,
+    "level_label": "leg origin",
+    "trigger": 24284.0,
+    "zone": [
+     24284.0,
+     24289.917766525046
+    ],
+    "invalidation": 24275.52055836874,
+    "extreme": 24277.0,
+    "detected_at": 1793941805.0,
+    "status_since": 1793941805.0,
+    "confirmed_at": null,
+    "confirmed_bar_end": null,
+    "resumed": false,
+    "plan": {
+     "entry_reference": 24284.0,
+     "risk_points": 8.47944163126158,
+     "targets": [
+      {
+       "n": 1,
+       "price": 24308.0,
+       "label": "prior high (where this pullback started)",
+       "distance": 24.0,
+       "reward_risk": 2.8303750463377217
+      }
+     ],
+     "note": "only one level was detected beyond the trigger, so there is no second target",
+     "basis": "index points from the trigger, not option premium"
+    },
+    "blockers": [],
+    "note": ""
+   },
+   "restart": null,
+   "v": 2,
+   "direction": "bullish",
+   "regime": "trend_up",
+   "options": null,
+   "counter_trend": [
+    {
+     "strategy_name": "Trend Exhaustion Reversal",
+     "side": "PE",
+     "needed": true,
+     "granted": false,
+     "reason": "denied: weakening continuation (regime fact: 0 of 6 weakening checks hold (needs 2))"
+    }
+   ],
+   "regime_active": [
+    "strong trend: bullish",
+    "range / pause / pullback / breakout: pullback"
+   ]
+  }
+ ],
+ "events": [
+  {
+   "seq": 2,
+   "time": 1793942705.0,
+   "id": "trend_pullback:bull:1793940000",
+   "strategy": "trend_pullback",
+   "strategy_name": "Trend Pullback",
+   "direction": "CE",
+   "status": "CONFIRMED",
+   "text": "CONFIRMED: trigger 24,281.00 (confirming candle completed 10:55)",
+   "code": null,
+   "superseded_by": null,
+   "final": null
+  },
+  {
+   "seq": 1,
+   "time": 1793942105.0,
+   "id": "trend_pullback:bull:1793940000",
+   "strategy": "trend_pullback",
+   "strategy_name": "Trend Pullback",
+   "direction": "CE",
+   "status": "WAITING_FOR_CONFIRMATION",
+   "text": "WAITING_FOR_CONFIRMATION: trigger 24,281.00",
+   "code": null,
+   "superseded_by": null,
+   "final": null
+  },
+  {
+   "seq": 0,
+   "time": 1793941805.0,
+   "id": "trend_pullback:bull:1793940000",
+   "strategy": "trend_pullback",
+   "strategy_name": "Trend Pullback",
+   "direction": "CE",
+   "status": "DETECTED",
+   "text": "DETECTED: leg origin 24,249.45",
+   "code": null,
+   "superseded_by": null,
+   "final": null
+  }
+ ],
+ "records": 4,
+ "status": {
+  "configured": true,
+  "directory": "logs",
+  "file": "decisions-2026-11-06.jsonl",
+  "ok": true,
+  "pending": 0,
+  "lost": 0,
+  "written": 4,
+  "last_ok": 1793942705.0,
+  "last_error": null,
+  "since": null,
+  "fsync": true,
+  "fsync_errors": 0
+ },
+ "bad_lines": 0,
+ "bad_line_numbers": [],
+ "unreadable_records": 0
+}

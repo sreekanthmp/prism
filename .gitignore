@@ -55,3 +55,6 @@ data/
 
 # market-data app: daily instrument-master cache
 .cache/
+
+# the React dashboard (Stage 9): npm packages are recreated by `npm ci`; the BUILT bundle in app/static/app is committed
+frontend/node_modules/
